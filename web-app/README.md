@@ -42,21 +42,14 @@ web-app/
    npm install
    ```
 
-2. Set up the web application:
-
-   ```bash
-   cd web-app
-   npm install
-   ```
-
-3. Set up environment variables:
+2. Set up environment variables:
 
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
-4. Start the development server:
+3. Start the development server:
 
    ```bash
    npm run dev
@@ -93,7 +86,6 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 To build and run the application using Docker:
 
 ```bash
-cd web-app
 docker build -t sokosumi .
 docker run -p 3000:3000 sokosumi
 ```
@@ -105,17 +97,3 @@ Run tests using Jest:
 ```bash
 npm run test
 ```
-
-## Contributing
-
-1. Create a new branch for your feature
-2. Make your changes
-3. Submit a pull request
-
-## License
-
-[Add your license here]
-
-## Contact
-
-[Add your contact information here]
