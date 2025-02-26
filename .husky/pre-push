@@ -66,21 +66,21 @@ done
 
 # Run tests with proper error handling
 echo "${BLUE}🔍 Running test suite...${NC}"
-if ! npm run test:ci; then
+if cd 'web-app' && npm run test:ci; then
     echo "${RED}❌ Tests failed. Please fix failing tests and try again.${NC}"
     exit 4
 fi
 
 # TypeScript build check
 echo "${BLUE}🔍 Running TypeScript compilation check...${NC}"
-if ! npm run build; then
+if cd 'web-app' && ! npm run build; then
     echo "${RED}❌ TypeScript compilation failed. Please fix type errors and try again.${NC}"
     exit 5
 fi
 
 # Security audit with better error handling
 echo "${BLUE}🔍 Running security audit...${NC}"
-if npm audit --audit-level=high --json >/dev/null 2>&1; then
+if cd 'web-app' && npm audit --audit-level=high --json >/dev/null 2>&1; then
     echo "${GREEN}✅ No high severity vulnerabilities found${NC}"
 else
     echo "${YELLOW}⚠️ Security vulnerabilities found. Please review:${NC}"
@@ -92,7 +92,7 @@ fi
 
 # Check for outdated dependencies
 echo "${BLUE}🔍 Checking for outdated dependencies...${NC}"
-if ! npm outdated --json >/dev/null 2>&1; then
+if cd 'web-app' && ! npm outdated --json >/dev/null 2>&1; then
     echo "${YELLOW}⚠️ Some dependencies are outdated. Consider updating them.${NC}"
     # Note: We don't exit here as this is informational
 fi
