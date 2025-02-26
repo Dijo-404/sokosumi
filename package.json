@@ -2,11 +2,9 @@
     "name": "sokosumi",
     "private": true,
     "type": "module",
-    "workspaces": [
-        "web-app/"
-    ],
+    "workspaces": [],
     "scripts": {
-        "prepare": "cd web-app && husky"
+        "prepare": "husky"
     },
     "devDependencies": {
         "husky": "^9.1.7",
