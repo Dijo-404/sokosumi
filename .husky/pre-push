@@ -66,7 +66,7 @@ done
 
 # Run tests with proper error handling
 echo "${BLUE}🔍 Running test suite...${NC}"
-if cd 'web-app' && npm run test:ci; then
+if cd 'web-app' && ! npm run test:ci; then
     echo "${RED}❌ Tests failed. Please fix failing tests and try again.${NC}"
     exit 4
 fi
