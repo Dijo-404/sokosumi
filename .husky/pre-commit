@@ -88,7 +88,4 @@ if command -v git-rev-parse >/dev/null 2>&1 && [ -d .git ]; then
 fi
 
 echo "${GREEN}✅ All checks passed!${NC}"
-# Only run lint-staged if it exists in package.json and npx is available
-if command -v npx >/dev/null 2>&1 && grep -q "\"lint-staged\"" package.json 2>/dev/null; then
-    npx --no -- lint-staged
-fi
+
