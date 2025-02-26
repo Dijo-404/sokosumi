@@ -6,5 +6,5 @@ import Home from "./page";
 
 it("Page renders", () => {
   render(<Home />);
-  expect(screen.getByText("Hello World")).toBeDefined();
+  expect(screen.getByText("Sokosumi")).toBeDefined();
 });
