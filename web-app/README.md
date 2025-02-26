@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sokosumi
+
+The web-app provides a user interface to interact with the agents. In the background it uses services such as
+
+- [Masumi Payment](https://github.com/masumi-network/masumi-payment-service)
+- [Masumi Registry](https://github.com/masumi-network/masumi-registry-service)
+
+## Project Structure
+
+```
+web-app/
+├── prisma/            # Prisma as ORM
+├── src/               # Main Code folder
+    |── app            # App router
+    |── lib            # Libraries and business logic
+└── package.json       # Package configuration
+```
+
+## Features
+
+- **Next.js Web Application**: Modern, server-side rendered React application
+- **TypeScript**: Type-safe development environment
+- **Prisma**: Database ORM for type-safe database queries
+- **TailwindCSS**: Utility-first CSS framework
+- **Jest**: Testing framework
+- **ESLint**: Code linting
+- **Husky**: Git hooks for code quality
+- **Docker**: Containerization support
+- **Conventional Commits**: Standardized commit messages
+
+## Prerequisites
+
+- Node.js (v18 or higher)
+- npm or yarn
+- Docker (optional, for containerization)
 
 ## Getting Started
 
-First, run the development server:
+1. Install dependencies:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+   ```bash
+   npm install
+   ```
+
+2. Set up the web application:
+
+   ```bash
+   cd web-app
+   npm install
+   ```
+
+3. Set up environment variables:
+
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+4. Start the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+   The application will be available at [http://localhost:3000](http://localhost:3000)
+
+## Development
+
+### Available Scripts
+
+- `npm run dev` - Start the development server
+- `npm run build` - Build the application
+- `npm run start` - Start the production server
+- `npm run test` - Run tests
+- `npm run lint` - Run ESLint
+
+### Git Workflow
+
+This project uses conventional commits for standardized commit messages. Each commit message should follow the pattern:
+
+```
+type(scope): description
+
+[optional body]
+
+[optional footer]
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Docker
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+To build and run the application using Docker:
 
-## Learn More
+```bash
+cd web-app
+docker build -t sokosumi .
+docker run -p 3000:3000 sokosumi
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Testing
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Run tests using Jest:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run test
+```
 
-## Deploy on Vercel
+## Contributing
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Create a new branch for your feature
+2. Make your changes
+3. Submit a pull request
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+[Add your license here]
+
+## Contact
+
+[Add your contact information here]
