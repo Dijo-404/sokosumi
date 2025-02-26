@@ -4,14 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "test": "jest --watch",
     "test:ci": "jest --ci",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "format": "prettier --log-level silent --write src/**/*.ts"
   },
   "dependencies": {
     "@prisma/extension-accelerate": "^1.2.2",
@@ -22,6 +23,9 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "prettier": "^3.5.1",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.3",
     "@eslint/eslintrc": "^3",
     "@testing-library/jest-dom": "6.1.5",
     "@testing-library/react": "16.2.0",
