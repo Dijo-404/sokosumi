@@ -27,7 +27,7 @@ jobs:
         run: cd web-app && npm run prisma:generate
 
       - name: Run Jest
-        run: cd web-app && npm run test
+        run: cd web-app && npm run test:ci
 
       - name: Run Build
         run: cd web-app && npm run build
