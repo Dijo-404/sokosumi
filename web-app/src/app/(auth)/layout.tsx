@@ -24,8 +24,8 @@ export default function AuthLayout({
             </Button>
           </Link>
         </div>
-        <div className="flex-1 rounded-lg border border-gray-200 p-3">
-          {children}
+        <div className="flex flex-1 items-center justify-center rounded-lg border border-gray-200 p-3">
+          <div className="flex w-full flex-col">{children}</div>
         </div>
       </div>
     </div>

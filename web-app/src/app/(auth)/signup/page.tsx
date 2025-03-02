@@ -73,7 +73,7 @@ export default function SignUp() {
         },
         onSuccess: () => {
           toast.success("Success");
-          router.push("/login");
+          router.push("/signin");
         },
       },
     });

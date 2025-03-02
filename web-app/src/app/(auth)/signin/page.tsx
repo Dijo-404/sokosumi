@@ -63,7 +63,7 @@ export default function SignIn() {
         },
         onSuccess: () => {
           toast.success("Success");
-          router.push("/");
+          router.push("/dashboard");
         },
       },
     });
