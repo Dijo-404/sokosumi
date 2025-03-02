@@ -1,22 +1,56 @@
 "use client";
-import Link from "next/link";
-import { FormEventHandler, useState } from "react";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { signIn } from "@/lib/auth.client";
+import { FormData } from "@/lib/form";
 
-export default function LogIn() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+import { signInFormSchema, SignInFormSchemaType } from "./data";
+
+const formData: FormData<SignInFormSchemaType> = [
+  { name: "email", label: "Email", placeholder: "me@example.com" },
+  {
+    name: "password",
+    label: "Password",
+    placeholder: "Password",
+    type: "password",
+  },
+];
+
+export default function SignIn() {
+  const router = useRouter();
+
+  const form = useForm<SignInFormSchemaType>({
+    resolver: zodResolver(signInFormSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
   const [loading, setLoading] = useState(false);
 
-  const onHandleSubmit: FormEventHandler = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (values: SignInFormSchemaType) => {
+    const { email, password } = values;
     const result = await signIn.email({
       email,
       password,
-      callbackURL: "/",
-      rememberMe,
       fetchOptions: {
         onRequest: () => {
           setLoading(true);
@@ -25,7 +59,11 @@ export default function LogIn() {
           setLoading(false);
         },
         onError: (ctx) => {
-          console.error(ctx.error.message);
+          toast.error(ctx.error.message || "Failed");
+        },
+        onSuccess: () => {
+          toast.success("Success");
+          router.push("/");
         },
       },
     });
@@ -33,57 +71,63 @@ export default function LogIn() {
   };
 
   return (
-    <div className="p-6 text-black">
-      <form onSubmit={onHandleSubmit}>
-        <h1 className="text-center text-white">Log In</h1>
-        <div className="m-4">
-          <label htmlFor="email" className="text-white">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="text"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <div className="m-4">
-          <label htmlFor="password" className="text-white">
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        <div className="m-4">
-          <input
-            id="remember-me"
-            type="checkbox"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-          />
-          <label htmlFor="remember-me" className="text-white">
-            Remember Me
-          </label>
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-white p-2 text-black"
+    <>
+      <div className="flex items-center justify-around gap-4">
+        <Button
+          className="flex flex-1 items-center justify-center gap-2 font-bold"
+          variant="outline"
         >
-          {loading ? "Loading" : "Submit"}
-        </button>
-      </form>
-      <div className="mt-4">
-        <Link href="/signup" className="text-white">
-          Sign Up
-        </Link>
+          <SiGithub /> Github
+        </Button>
+        <Button
+          className="flex flex-1 items-center justify-center gap-2 font-bold"
+          variant="outline"
+        >
+          <SiGoogle /> Google
+        </Button>
       </div>
-    </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <hr className="h-0 flex-1 border-0 border-t border-gray-200" />
+        <span className="text-xs uppercase text-gray-400">
+          Or Continue With
+        </span>
+        <hr className="h-0 flex-1 border-0 border-t border-gray-200" />
+      </div>
+
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex flex-col gap-6"
+        >
+          {formData.map(({ name, label, placeholder, type, description }) => (
+            <FormField
+              key={name}
+              control={form.control}
+              name={name}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{label || "Label"}</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={placeholder || "Placeholder"}
+                      type={type || "text"}
+                      {...field}
+                    />
+                  </FormControl>
+                  {description && (
+                    <FormDescription>{description}</FormDescription>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
+          <Button type="submit" disabled={loading}>
+            {loading && <Loader2 className="animate-spin" />} Continue
+          </Button>
+        </form>
+      </Form>
+    </>
   );
 }

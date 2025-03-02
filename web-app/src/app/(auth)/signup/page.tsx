@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -41,6 +42,8 @@ const formData: FormData<SignUpFormSchemaType> = [
 ];
 
 export default function SignUp() {
+  const router = useRouter();
+
   const form = useForm<SignUpFormSchemaType>({
     resolver: zodResolver(signUpFormSchema),
     defaultValues: {
@@ -58,7 +61,6 @@ export default function SignUp() {
       name: username,
       email,
       password,
-      callbackURL: "/login",
       fetchOptions: {
         onRequest: () => {
           setLoading(true);
@@ -71,6 +73,7 @@ export default function SignUp() {
         },
         onSuccess: () => {
           toast.success("Success");
+          router.push("/login");
         },
       },
     });

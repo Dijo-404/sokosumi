@@ -31,11 +31,11 @@ export const auth = betterAuth({
       });
       console.log(res, user.email);
     },
-    sendOnSignUp: true,
+    // sendOnSignUp: true,
   },
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true,
+    // requireEmailVerification: true,
     async sendResetPassword({ user, url }) {
       await resend.emails.send({
         from,
