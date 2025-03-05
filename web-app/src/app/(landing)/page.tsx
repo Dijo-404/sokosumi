@@ -1,4 +1,6 @@
 import { AuthButtons } from "@/app/(landing)/components/auth-buttons";
+import Footer from "@/app/(landing)/components/footer";
+import HowItWorks from "@/app/(landing)/components/how-it-works";
 import TextInputWithSubmit from "@/app/(landing)/components/input-with-button";
 import { MainNav } from "@/app/(landing)/components/main-nav";
 import TrustedPartners from "@/app/(landing)/components/trusted-partners";
@@ -7,15 +9,43 @@ import SokosumiLogo from "@/app/components/sokosumi-logo";
 export default function LandingPage() {
   return (
     <>
-      <div className="min-h-screen w-full bg-landing">
+      <div className="w-full bg-landing">
         <TopNavigation />
-        <div className="container mx-auto px-4 space-y-16 py-16 lg:py-24">
+        <div className="container mx-auto px-4 space-y-16 pt-16 lg:pt-24">
           <MainContent />
           <TextInputWithSubmit />
           <div className="mt-auto">
             <TrustedPartners />
           </div>
         </div>
+      </div>
+      <div id="agents-gallery" className="bg-[#F2F2F3] w-full">
+        <div className="container mx-auto px-4 space-y-16 py-16 lg:py-24">
+          <h2 className="text-2xl font-bold">Agent Gallery</h2>
+        </div>
+      </div>
+      <div id="number-talks" className="bg-[#E4B1F6] w-full">
+        <div className="container mx-auto px-4 space-y-16 py-16 lg:py-24">
+          <h2 className="text-2xl font-bold">Number of Talks</h2>
+        </div>
+      </div>
+      <div id="how-it-works">
+        <div className="container mx-auto px-4 py-16">
+          <HowItWorks />
+        </div>
+      </div>
+      <div id="what-our-users-say" className="bg-[#DFDFDF] w-full">
+        <div className="container mx-auto px-4 space-y-16 py-16 lg:py-24">
+          <h2 className="text-2xl font-bold">What our users say</h2>
+        </div>
+      </div>
+      <div id="contribute">
+        <div className="container mx-auto px-4 space-y-16 py-16 lg:py-24">
+          <h2 className="text-2xl font-bold">Contribute</h2>
+        </div>
+      </div>
+      <div id="footer">
+        <Footer />
       </div>
     </>
   );
