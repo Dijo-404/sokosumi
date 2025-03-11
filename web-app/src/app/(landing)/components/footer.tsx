@@ -1,85 +1,62 @@
-import { ArrowRight, ArrowUpRight } from "lucide-react"
-import Link from "next/link"
+import Link from "next/link";
+import { useTranslations } from "next-intl";
 
-import { DiscordButton,XButton } from "./social-button"
+import { SokosumiLogo } from "@/components/masumi-logos";
 
 export default function Footer() {
+  const t = useTranslations("Landing.Footer.Navigation");
   return (
-    <footer className="bg-black text-white">
-      <div className="container px-4 py-12 mx-auto">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          {/* First column - top: Social Media */}
-          <div>
-            <h3 className="text-lg font-medium text-muted-foreground">Join our community</h3>
-            <div className="flex mt-4 space-x-4">
-              <XButton />
-              <DiscordButton />
-            </div>
-          </div>
+    <footer
+      id="footer"
+      className="bg-landing-footer-background text-landing-footer-foreground"
+    >
+      <div className="container mx-auto px-4 py-12">
+        {/* Top section with logo */}
+        <div className="mb-8">
+          <SokosumiLogo variant="white" />
+        </div>
 
-          {/* Second column - top: Vertical list of links) */}
-          <div>
-            <nav>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="#" className="text-xl hover:text-muted-foreground flex items-center gap-1">
-                    <ArrowRight className="w-4 h-4" />
-                    <span>Home</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#agents-gallery" className="text-xl hover:text-muted-foreground flex items-center gap-1">
-                    <ArrowRight className="w-4 h-4" />
-                    <span>Gallery</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#how-it-works" className="text-xl hover:text-muted-foreground flex items-center gap-1">
-                    <ArrowRight className="w-4 h-4" />
-                    <span>How it Works</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#contribute" className="text-xl hover:text-muted-foreground flex items-center gap-1">
-                    <ArrowRight className="w-4 h-4" />
-                    <span>Contribute</span>
-                  </Link>
-                </li>
-              </ul>
-            </nav>
-          </div>
-
-          {/* First column - bottom: Copyright */}
-          <div>
-            <p className="text-sm text-muted-foreground">
-              Masumi AG &copy; {new Date().getFullYear()} All rights reserved.
-            </p>
-          </div>
-
-          {/* Second column - bottom: Horizontal list of links */}
-          <div>
-            <ul className="flex flex-wrap space-x-4">
+        {/* Bottom section with copyright and links */}
+        <div className="border-landing-footer-foreground/10 flex flex-col items-center justify-between gap-4 border-t pt-8 md:flex-row">
+          <p className="text-sm">&copy; {new Date().getFullYear()} Masumi</p>
+          <nav>
+            <ul className="flex flex-wrap justify-center gap-6">
               <li>
-                <Link href="#" className="text-sm text-muted-foreground hover:text-white flex items-center gap-1">
-                  Imprint
+                <Link
+                  href="#"
+                  className="text-muted-foreground hover:text-landing-footer-foreground flex items-center gap-1 text-sm"
+                >
+                  {t("PrivacyPolicy")}
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm text-muted-foreground hover:text-white flex items-center gap-1">
-                  Contact
+                <Link
+                  href="#"
+                  className="text-muted-foreground hover:text-landing-footer-foreground flex items-center gap-1 text-sm"
+                >
+                  {t("TermsAndConditions")}
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm text-muted-foreground hover:text-white flex items-center gap-1">
-                  Privacy Policy<ArrowUpRight className="w-4 h-4" />
+                <Link
+                  href="#"
+                  className="text-muted-foreground hover:text-landing-footer-foreground flex items-center gap-1 text-sm"
+                >
+                  {t("CookiePolicy")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="#"
+                  className="text-muted-foreground hover:text-landing-footer-foreground flex items-center gap-1 text-sm"
+                >
+                  {t("Contact")}
                 </Link>
               </li>
             </ul>
-          </div>
+          </nav>
         </div>
       </div>
     </footer>
-  )
+  );
 }
-
-

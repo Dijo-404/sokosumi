@@ -1,92 +1,69 @@
-import { AuthButtons } from "@/app/(landing)/components/auth-buttons";
-import Footer from "@/app/(landing)/components/footer";
-import HowItWorks from "@/app/(landing)/components/how-it-works";
-import TextInputWithSubmit from "@/app/(landing)/components/input-with-button";
-import { MainNav } from "@/app/(landing)/components/main-nav";
-import TrustedPartners from "@/app/(landing)/components/trusted-partners";
-import SokosumiLogo from "@/app/components/sokosumi-logo";
+import { useTranslations } from "next-intl";
+
+import AgentCard from "@/components/agent-card";
+import { dummyAgents } from "@/data/agents";
+
+import HorizontalScroll from "./components/horizontal-scroll";
+import Section from "./components/section";
+import Hero from "./page/hero";
+import HowItWorks from "./page/how-it-works";
+import { JoinOurCommunity } from "./page/join-our-community";
+import { MonetizeYourAgent } from "./page/monetize-your-agent";
+import NumberTalks from "./page/number-talks";
 
 export default function LandingPage() {
+  const t = useTranslations("Landing");
   return (
     <>
-      <div className="w-full bg-landing">
-        <TopNavigation />
-        <div className="container mx-auto px-4 space-y-16 pt-16 lg:pt-24">
-          <MainContent />
-          <TextInputWithSubmit />
-          <div className="mt-auto">
-            <TrustedPartners />
-          </div>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden py-20">
+        <div className="container px-4 md:px-6">
+          <Hero />
         </div>
-      </div>
-      <div id="agents-gallery" className="bg-[#F2F2F3] w-full">
-        <div className="container mx-auto px-4 space-y-16 py-16 lg:py-24">
-          <h2 className="text-2xl font-bold">Agent Gallery</h2>
-        </div>
-      </div>
-      <div id="number-talks" className="bg-[#E4B1F6] w-full">
-        <div className="container mx-auto px-4 space-y-16 py-16 lg:py-24">
-          <h2 className="text-2xl font-bold">Number of Talks</h2>
-        </div>
-      </div>
-      <div id="how-it-works">
-        <div className="container mx-auto px-4 py-16">
+      </section>
+
+      {/* Agent Gallery Section */}
+      <section id="agents-gallery" className="py-12">
+        <AgentsGallery />
+      </section>
+
+      {/* Number of Talks Section */}
+      <section id="number-talks" className="py-12">
+        <Section title={t("Page.NumberTalks.title")} fullWidth>
+          <NumberTalks />
+        </Section>
+      </section>
+
+      {/* How It Works Section */}
+      <section id="how-it-works" className="py-12">
+        <Section title={t("Page.HowItWorks.title")}>
           <HowItWorks />
-        </div>
-      </div>
-      <div id="what-our-users-say" className="bg-[#DFDFDF] w-full">
-        <div className="container mx-auto px-4 space-y-16 py-16 lg:py-24">
-          <h2 className="text-2xl font-bold">What our users say</h2>
-        </div>
-      </div>
-      <div id="contribute">
-        <div className="container mx-auto px-4 space-y-16 py-16 lg:py-24">
-          <h2 className="text-2xl font-bold">Contribute</h2>
-        </div>
-      </div>
-      <div id="footer">
-        <Footer />
-      </div>
+        </Section>
+      </section>
+
+      {/* Join Our Community Section */}
+      <section id="join-our-community" className="py-12">
+        <Section title={t("Page.JoinOurCommunity.title")}>
+          <JoinOurCommunity />
+        </Section>
+      </section>
+
+      {/* Monetize Your Agent Section */}
+      <section id="monetize" className="py-12">
+        <Section title={t("Page.MonetizeYourAgent.title")}>
+          <MonetizeYourAgent />
+        </Section>
+      </section>
     </>
   );
 }
 
-function TopNavigation() {
+function AgentsGallery() {
   return (
-    <div className="w-full px-4 py-6 lg:px-8">
-      <div className="container mx-auto flex items-center gap-6 justify-between">
-        {/* Left - Logo */}
-        <SokosumiLogo />
-
-        {/* Middle - Navigation Links */}
-        <MainNav />
-
-        {/* Right - Auth Buttons */}
-        <AuthButtons />
-      </div>
-    </div>
-  );
-}
-
-function MainContent() {
-  return (
-    <div className="container mx-auto flex items-center justify-between">
-      <div className="flex flex-col items-center gap-8 lg:flex-row">
-        {/* First text box - smaller width */}
-        <div className="w-full lg:w-1/5">
-          <p className="font-bold">
-            The most powerful way to find and hire agents. Prompt, run, edit and
-            deploy your agents.
-          </p>
-        </div>
-
-        {/* Second text box - larger width */}
-        <div className="mx-auto w-full lg:w-1/2">
-          <p className={`font-light text-left text-7xl tracking-tighter`}>
-            A marketplace for agent-to-agent interactions
-          </p>
-        </div>
-      </div>
-    </div>
+    <HorizontalScroll>
+      {dummyAgents.map((agent, index) => (
+        <AgentCard key={index} agent={agent} />
+      ))}
+    </HorizontalScroll>
   );
 }

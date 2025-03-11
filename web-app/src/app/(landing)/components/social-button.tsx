@@ -1,51 +1,99 @@
-'use client'
+"use client";
 
-import Image from "next/image"
+import Image from "next/image";
 
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button";
 
 interface SocialButtonProps {
-  iconPath: string
-  title: string
-  onClick?: () => void
-  className?: string
+  iconPath: string;
+  altText?: string;
+  children: React.ReactNode;
+  onClick?: () => void;
 }
 
 export default function SocialButton({
   iconPath,
-  title,
+  children,
   onClick,
-  className,
+  altText,
 }: SocialButtonProps) {
+  const alt =
+    altText ??
+    (typeof children === "string" ? `${children} icon` : "social icon");
+
   return (
-    <Button
-      className={cn(
-        "bg-[#4F4F58] hover:bg-[#4F4F58]/90 flex items-center gap-2",
-        className
-      )}
-      onClick={onClick}
-    >
+    <Button variant="outline" onClick={onClick}>
       <Image
         src={iconPath}
-        alt={`${title} icon`}
+        alt={alt}
         width={20}
         height={20}
-        className="h-5 w-5"
+        className="h-4 w-4"
       />
-      <span>{title}</span>
+      <span>{children}</span>
     </Button>
-  )
+  );
 }
 
 export function XButton() {
-    return (
-        <SocialButton iconPath="/socials/x.svg" title="Platform X" onClick={() => window.open("https://x.com/sokosumi", "_blank", "noopener,noreferrer")} />      
-    )
+  return (
+    <SocialButton
+      iconPath="/socials/x.svg"
+      onClick={() =>
+        window.open(
+          "https://x.com/MasumiNetwork",
+          "_blank",
+          "noopener,noreferrer",
+        )
+      }
+    >
+      Platform X
+    </SocialButton>
+  );
 }
 
 export function DiscordButton() {
-    return (
-        <SocialButton iconPath="/socials/discord.svg" title="Discord" onClick={() => window.open("https://discord.gg/sokosumi", "_blank", "noopener,noreferrer")} />
-    )
+  return (
+    <SocialButton
+      iconPath="/socials/discord.svg"
+      onClick={() =>
+        window.open(
+          "https://discord.gg/aj4QfnTS92",
+          "_blank",
+          "noopener,noreferrer",
+        )
+      }
+    >
+      Discord
+    </SocialButton>
+  );
+}
+
+export function GitHubButton({
+  children,
+  url,
+}: {
+  children: React.ReactNode;
+  url: string;
+}) {
+  return (
+    <SocialButton
+      iconPath="/socials/github.svg"
+      onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
+    >
+      {children}
+    </SocialButton>
+  );
+}
+
+export function MasumiButton() {
+  return (
+    <Button
+      onClick={() =>
+        window.open("https://masumi.network", "_blank", "noopener,noreferrer")
+      }
+    >
+      Masumi Network
+    </Button>
+  );
 }
