@@ -1,10 +1,7 @@
 import { useTranslations } from "next-intl";
 
-import AgentCard from "@/components/agent-card";
-import { dummyAgents } from "@/data/agents";
-
-import HorizontalScroll from "./components/horizontal-scroll";
 import Section from "./components/section";
+import AgentsGallery from "./page/agents-gallery";
 import Hero from "./page/hero";
 import HowItWorks from "./page/how-it-works";
 import { JoinOurCommunity } from "./page/join-our-community";
@@ -55,15 +52,5 @@ export default function LandingPage() {
         </Section>
       </section>
     </>
-  );
-}
-
-function AgentsGallery() {
-  return (
-    <HorizontalScroll>
-      {dummyAgents.map((agent, index) => (
-        <AgentCard key={index} agent={agent} />
-      ))}
-    </HorizontalScroll>
   );
 }

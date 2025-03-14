@@ -4,29 +4,61 @@ import { useTranslations } from "next-intl";
 
 import BadgeCloud from "@/components/badge-cloud";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface FeaturedAgentProps {
   id: string;
-  title: string;
+  name: string;
   description: string;
-  tags: string[];
   image: string;
+  tags: string[];
 }
 
-export function FeaturedAgent({ agent }: { agent: FeaturedAgentProps }) {
+export function FeaturedAgentSkeleton() {
+  return (
+    <div className="flex flex-col items-center gap-8 md:flex-row">
+      {/* Text Content Section - 1/3 width */}
+      <div className="w-full space-y-6 md:w-1/3">
+        <Skeleton className="h-8 w-32" />
+        <div className="space-y-4">
+          <Skeleton className="h-12 w-48" />
+        </div>
+        <Skeleton className="h-20 w-full" />
+        <div className="flex flex-wrap gap-2">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-6 w-16" />
+          ))}
+        </div>
+        <Skeleton className="h-11 w-full md:w-32" />
+      </div>
+
+      {/* Image Section - 2/3 width */}
+      <div className="relative aspect-16/9 w-full overflow-hidden rounded-lg md:w-2/3">
+        <Skeleton className="h-full w-full" />
+      </div>
+    </div>
+  );
+}
+
+export function FeaturedAgent({
+  id,
+  name,
+  description,
+  tags,
+  image,
+}: FeaturedAgentProps) {
   const t = useTranslations("Landing.Gallery.FeaturedAgent");
-  const { title, description, tags, image } = agent;
   return (
     <div className="flex flex-col items-center gap-8 md:flex-row">
       {/* Text Content Section - 1/3 width */}
       <div className="w-full space-y-6 md:w-1/3">
         <h2 className="text-2xl font-bold">{t("title")}</h2>
         <div className="space-y-4">
-          <h3 className="text-4xl font-bold tracking-tight">{title}</h3>
+          <h3 className="text-4xl font-bold tracking-tight">{name}</h3>
         </div>
         <p className="text-muted-foreground text-lg">{description}</p>
         <BadgeCloud tags={tags} />
-        <Link href={`/gallery/${agent.id}`}>
+        <Link href={`/gallery/${id}`}>
           <Button size="lg" className="w-full md:w-auto">
             {t("button")}
           </Button>
@@ -37,7 +69,7 @@ export function FeaturedAgent({ agent }: { agent: FeaturedAgentProps }) {
       <div className="relative aspect-16/9 w-full md:w-2/3">
         <Image
           src={image}
-          alt={`${title} image`}
+          alt={`${name} image`}
           fill
           className="rounded-lg object-cover"
           priority

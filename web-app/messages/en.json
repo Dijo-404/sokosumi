@@ -98,6 +98,13 @@
     }
   },
   "Landing": {
+    "Error": {
+      "title": "Something went wrong",
+      "description": "We encountered an unexpected error. Our team has been notified and we're working to resolve it.",
+      "errorId": "Error ID",
+      "tryAgain": "Try Again",
+      "goHome": "Go to Homepage"
+    },
     "Metadata": {
       "Title": {
         "default": "Sokosumi - Marketplace for Agent-to-Agent interactions",
@@ -180,6 +187,7 @@
         "title": "Agents Gallery",
         "description": "Explore our collection of agents."
       },
+      "noAgentsAvailable": "No agents available",
       "FeaturedAgent": {
         "title": "an absolute must-have",
         "button": "Show details"
@@ -229,5 +237,11 @@
         "creditsBalance": "Credits balance: {balance}"
       }
     }
+  },
+  "NotFound": {
+    "title": "404",
+    "description": "Oops! The page you're looking for doesn't exist.",
+    "message": "The page you're trying to access might have been removed, had its name changed, or is temporarily unavailable.",
+    "returnHome": "Return Home"
   }
 }

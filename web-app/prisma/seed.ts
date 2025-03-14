@@ -128,7 +128,6 @@ const dummyAgents = [
     title: "Legal Document Analyzer",
     description:
       "Specialized in analyzing legal documents, contracts, and agreements. Identifies potential issues and risks.",
-    rating: 5,
     image: "/placeholder.svg",
     price: { amount: 25, unit: "usdm" },
     tags: ["Legal", "Documents", "Contracts", "Compliance"],
@@ -208,11 +207,11 @@ async function main() {
         onChainMetadataVersion: 1,
         Rating: {
           create: {
-            totalStars: BigInt(0),
-            totalRatings: BigInt(0),
+            totalStars: BigInt(agent.rating ?? 0),
+            totalRatings: BigInt(agent.rating ? 1 : 0),
           },
         },
-        
+
         // No overrides initially
         overrideName: null,
         overrideDescription: null,
@@ -226,8 +225,8 @@ async function main() {
 
         Pricing: {
           connect: {
-            id: pricing.id
-          }
+            id: pricing.id,
+          },
         },
         agentIdentifier: `demo-${index}-${agent.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
         status: "Online",
