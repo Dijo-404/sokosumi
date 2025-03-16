@@ -34,6 +34,11 @@ web-app/
 - [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 - [Docker](https://www.docker.com) (optional, for containerization)
 
+## URLs
+
+- **Development**: [https://sokosumi-dev-xptei.ondigitalocean.app/](https://sokosumi-dev-xptei.ondigitalocean.app/)
+- **Production**: [https://sokosumi-llb2d.ondigitalocean.app/](https://sokosumi-llb2d.ondigitalocean.app/)
+
 ## Getting Started
 
 1. Install dependencies:
@@ -78,14 +83,4 @@ npm run test
 ### Seeding the database
 
 Copy the `.example.env` into `.env` and set an appropriate `DATABASE_URL`. Then run `npm run prisma:migrate` to deploy the migrations and seed the database (double check the console) or `npm run prisma:seed` to only seed the db if the migrations are applied already
-
-## Docker
-
-To build and run the application using Docker:
-
-```bash
-docker build -t sokosumi .
-docker run -p 3000:3000 sokosumi
-```
-
 
