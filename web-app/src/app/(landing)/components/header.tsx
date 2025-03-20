@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { SokosumiLogo } from "@/components/masumi-logos";
 
-import AuthButtons from "./auth-buttons";
+import AppConnection from "./app-connection";
 import Navigation from "./navigation";
 import SheetNavigation from "./sheet-navigation";
 
@@ -20,7 +20,7 @@ export default function Header() {
 
         {/* Right - Auth Buttons */}
         <div className="ml-auto hidden sm:flex">
-          <AuthButtons />
+          <AppConnection />
         </div>
 
         {/* Sheet Navigation Trigger */}
