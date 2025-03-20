@@ -20,14 +20,16 @@ export default function CustomTrigger({ when = "always" }: CustomTriggerProps) {
   const { open, openMobile, isMobile, toggleSidebar } = useSidebar();
   const isVisible = isMobile ? openMobile : open;
 
+  const showTrigger =
+    when === "always" || (when === "visible" ? isVisible : !isVisible);
+
   return (
     <Button
       variant="outline"
       size="icon"
       onClick={toggleSidebar}
       className={cn("hidden", {
-        flex:
-          when === "always" || (when === "visible" ? isVisible : !isVisible),
+        flex: showTrigger,
       })}
     >
       {isVisible ? <ArrowLeftFromLine /> : <ArrowRightFromLine />}
