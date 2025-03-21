@@ -1,17 +1,11 @@
 "use server";
 
-import { z } from "zod";
-
 import { auth } from "@/lib/better-auth/auth";
 
-const forgotPasswordSchema = z.object({
-  email: z.string().email(),
-});
+import { forgotPasswordFormSchema, ForgotPasswordFormSchemaType } from "./data";
 
-export async function forgotPassword(formData: FormData) {
-  const validatedFields = forgotPasswordSchema.safeParse({
-    email: formData.get("email"),
-  });
+export async function forgotPassword(formData: ForgotPasswordFormSchemaType) {
+  const validatedFields = forgotPasswordFormSchema().safeParse(formData);
 
   if (!validatedFields.success) {
     return { error: "Invalid email address" };

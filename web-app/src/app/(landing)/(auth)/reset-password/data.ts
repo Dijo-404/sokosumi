@@ -2,21 +2,24 @@ import { z } from "zod";
 
 import { FormData, FormIntlTranslation } from "@/lib/form";
 
+import { passwordSchema } from "../data";
+
 export const resetPasswordFormSchema = (
-  t: FormIntlTranslation<"Auth.Pages.ResetPassword.Form">,
+  t:
+    | FormIntlTranslation<"Auth.Pages.ResetPassword.Form">
+    | undefined = undefined,
 ) =>
   z
     .object({
-      password: z
-        .string()
-        .min(8, t("Errors.Password.min"))
-        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
-          message: t("Errors.Password.regex"),
-        }),
+      password: passwordSchema({
+        minError: t?.("Errors.Password.min"),
+        regexError: t?.("Errors.Password.regex"),
+      }),
       confirmPassword: z.string(),
+      token: z.string(),
     })
     .refine((data) => data.password === data.confirmPassword, {
-      message: t("Errors.ConfirmPassword.match"),
+      message: t?.("Errors.ConfirmPassword.match"),
       path: ["confirmPassword"],
     });
 

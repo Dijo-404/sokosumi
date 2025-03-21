@@ -2,30 +2,27 @@ import { z } from "zod";
 
 import { FormData, FormIntlTranslation } from "@/lib/form";
 
-const signUpFormSchema = (t: FormIntlTranslation<"Auth.Pages.SignUp.Form">) =>
+import { passwordSchema } from "../data";
+
+const signUpFormSchema = (
+  t: FormIntlTranslation<"Auth.Pages.SignUp.Form"> | undefined = undefined,
+) =>
   z
     .object({
       username: z
         .string()
-        .min(2, {
-          message: t("Errors.Username.min"),
-        })
-        .max(50, { message: t("Errors.Username.max") }),
-      email: z.string().email({
-        message: t("Errors.Email.invalid"),
+        .min(2, t?.("Errors.Username.min"))
+        .max(50, t?.("Errors.Username.max"))
+        .regex(/^\S*$/, t?.("Errors.Username.regex")),
+      email: z.string().email(t?.("Errors.Email.invalid")),
+      password: passwordSchema({
+        minError: t?.("Errors.Password.min"),
+        regexError: t?.("Errors.Password.regex"),
       }),
-      password: z
-        .string()
-        .min(8, {
-          message: t("Errors.Password.min"),
-        })
-        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
-          message: t("Errors.Password.regex"),
-        }),
       confirmPassword: z.string(),
     })
     .refine(({ password, confirmPassword }) => password === confirmPassword, {
-      message: t("Errors.ConfirmPassword.match"),
+      message: t?.("Errors.ConfirmPassword.match"),
       path: ["confirmPassword"],
     });
 

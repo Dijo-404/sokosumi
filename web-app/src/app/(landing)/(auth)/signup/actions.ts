@@ -1,23 +1,11 @@
 "use server";
 
-import { z } from "zod";
-
 import { auth } from "@/lib/better-auth/auth";
 
-import { passwordSchema } from "../data";
+import { signUpFormSchema, SignUpFormSchemaType } from "./data";
 
-const signupSchema = z.object({
-  email: z.string().email(),
-  username: z.string().min(2).max(50),
-  password: passwordSchema,
-});
-
-export async function signup(formData: FormData) {
-  const validatedFields = signupSchema.safeParse({
-    email: formData.get("email"),
-    username: formData.get("username"),
-    password: formData.get("password"),
-  });
+export async function signup(formData: SignUpFormSchemaType) {
+  const validatedFields = signUpFormSchema().safeParse(formData);
 
   if (!validatedFields.success) {
     return { error: "Invalid form data" };

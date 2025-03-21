@@ -101,8 +101,8 @@
               "placeholder": "me@example.com"
             },
             "Username": {
-              "label": "User Name",
-              "placeholder": "John Doe"
+              "label": "Username",
+              "placeholder": "JohnDoe"
             },
             "Password": {
               "label": "Password",
@@ -118,8 +118,9 @@
               "invalid": "Please enter a valid email address."
             },
             "Username": {
-              "min": "User Name must be at least 2 characters.",
-              "max": "User Name must be maximum 50 characters."
+              "min": "Username must be at least 2 characters.",
+              "max": "Username must be maximum 50 characters.",
+              "regex": "Username must contain only letters, numbers, and underscores."
             },
             "Password": {
               "min": "Password must be at least 8 characters.",

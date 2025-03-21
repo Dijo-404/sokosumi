@@ -1,19 +1,11 @@
 "use server";
 
-import { z } from "zod";
-
 import { auth } from "@/lib/better-auth/auth";
 
-const signInSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
-});
+import { signInFormSchema, SignInFormSchemaType } from "./data";
 
-export async function signin(formData: FormData) {
-  const validatedFields = signInSchema.safeParse({
-    email: formData.get("email"),
-    password: formData.get("password"),
-  });
+export async function signin(formData: SignInFormSchemaType) {
+  const validatedFields = signInFormSchema().safeParse(formData);
 
   if (!validatedFields.success) {
     return { error: "Invalid form data" };
