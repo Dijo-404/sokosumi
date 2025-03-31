@@ -5,7 +5,17 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AgentDTO } from "@/lib/db/dto/AgentDTO";
+import {
+  getAuthorName,
+  getCredits,
+  getDescription,
+  getExampleOutput,
+  getLegal,
+  getName,
+  getResolvedImage,
+  getTags,
+} from "@/lib/db/extension/agent";
+import { AgentWithRelations } from "@/lib/db/services/agent.service";
 import { AgentListWithAgent } from "@/lib/db/services/agentList.service";
 import { cn } from "@/lib/utils";
 import { AppRoute } from "@/types/routes";
@@ -76,23 +86,17 @@ function AgentDetailSkeleton({ className }: AgentDetailSkeletonProps) {
 }
 
 interface AgentDetailsProps {
-  agent: AgentDTO;
+  agent: AgentWithRelations;
   agentList?: AgentListWithAgent | undefined;
   className?: string;
 }
 
 function AgentDetails({ agent, agentList, className }: AgentDetailsProps) {
   const t = useTranslations("Components.Agents.AgentDetail");
-  const {
-    name,
-    description,
-    author,
-    image,
-    credits,
-    tags,
-    exampleOutput,
-    legal,
-  } = agent;
+
+  const legal = getLegal(agent);
+  const exampleOutput = getExampleOutput(agent);
+  const description = getDescription(agent);
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -100,8 +104,8 @@ function AgentDetails({ agent, agentList, className }: AgentDetailsProps) {
       <div className="flex w-full flex-col gap-y-4 sm:flex-row">
         <div className="relative mx-auto h-48 w-48">
           <Image
-            src={image}
-            alt={name}
+            src={getResolvedImage(agent)}
+            alt={getName(agent)}
             fill
             className="rounded-md object-cover"
             priority
@@ -112,9 +116,9 @@ function AgentDetails({ agent, agentList, className }: AgentDetailsProps) {
           <div className="flex items-start justify-between gap-4">
             {/* Title and Author */}
             <div>
-              <h2 className="text-2xl font-bold">{name}</h2>
+              <h2 className="text-2xl font-bold">{getName(agent)}</h2>
               <p className="text-muted-foreground line-clamp-1">
-                {t("byAuthor", { author })}
+                {t("byAuthor", { author: getAuthorName(agent) })}
               </p>
             </div>
             {/* Bookmark Button - only render if agentList is provided */}
@@ -128,7 +132,7 @@ function AgentDetails({ agent, agentList, className }: AgentDetailsProps) {
           </div>
           {/* Pricing */}
           <p className="pt-1 text-sm font-medium">
-            {t("pricing", { price: credits })}
+            {t("pricing", { price: getCredits(agent) })}
           </p>
           {/* Action Buttons */}
           <div className="mt-auto flex flex-col gap-3">
@@ -147,10 +151,12 @@ function AgentDetails({ agent, agentList, className }: AgentDetailsProps) {
       </div>
 
       {/* Tags */}
-      <BadgeCloud tags={tags} />
-      <div className="text-muted-foreground">
-        <p>{description}</p>
-      </div>
+      <BadgeCloud tags={getTags(agent)} />
+      {description && (
+        <div className="text-muted-foreground">
+          <p>{description}</p>
+        </div>
+      )}
 
       {/* Example Output */}
       <ScrollArea>
