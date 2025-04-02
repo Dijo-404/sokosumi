@@ -7,12 +7,13 @@ import { AgentBookmarkButton } from "@/components/agents/agent-bookmark-button";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireAuthentication } from "@/lib/auth/utils";
-import { getCredits, getName } from "@/lib/db/extension/agent";
+import { getCreditsToDisplay, getName } from "@/lib/db/extension/agent";
 import { AgentWithRelations } from "@/lib/db/services/agent.service";
 import { getOrCreateFavoriteAgentList } from "@/lib/db/services/agentList.service";
 
 interface HeaderProps {
   agent: AgentWithRelations;
+  agentPricing: number;
 }
 
 const bookmarkSize = 36;
@@ -55,7 +56,7 @@ async function AgentBookmarkSection({ agentId }: { agentId: string }) {
   );
 }
 
-export default async function Header({ agent }: HeaderProps) {
+export default async function Header({ agent, agentPricing }: HeaderProps) {
   const t = await getTranslations("App.Jobs.Header");
 
   return (
@@ -73,7 +74,7 @@ export default async function Header({ agent }: HeaderProps) {
         {t("createNewJob")}
       </Button>
       <div className="text-base">
-        {t("price", { price: getCredits(agent) })}
+        {t("price", { price: getCreditsToDisplay(agentPricing) })}
       </div>
     </div>
   );

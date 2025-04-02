@@ -318,9 +318,17 @@ const seedAgents = async () => {
 };
 
 const seedJobs = async (userId: string) => {
-  const agents = await prisma.agent.findMany();
+  const agents = await prisma.agent.findMany({
+    include: {
+      jobs: true,
+    },
+  });
 
   for (const agent of agents) {
+    if (agent.jobs.length > 0) {
+      console.log(`Agent ${agent.name} already has jobs, skipping...`);
+      continue;
+    }
     const numJobs = Math.floor(Math.random() * 51); // 0 to 50 jobs
 
     const jobPromises = Array.from({ length: numJobs }, async (_, index) => {
@@ -404,24 +412,44 @@ const seedJobs = async (userId: string) => {
   }
 };
 
+const seedCreditCost = async () => {
+  console.log("Seeding credit cost...");
+  await prisma.creditCost.upsert({
+    where: {
+      unit: "usdm",
+    },
+    update: {
+      creditCostPerUnit: BigInt(1),
+    },
+    create: {
+      unit: "usdm",
+      creditCostPerUnit: BigInt(1),
+    },
+  });
+  console.log("USDM credit cost seeded");
+
+  await prisma.creditCost.upsert({
+    where: {
+      unit: "",
+    },
+    update: {
+      creditCostPerUnit: BigInt(1_000_000),
+    },
+    create: {
+      unit: "",
+      creditCostPerUnit: BigInt(1_000_000),
+    },
+  });
+  console.log("Lovelace credit cost seeded");
+};
+
 async function main() {
   if (seedDatabase) {
     const userId = await seedUser();
     await seedAgents();
     await seedJobs(userId);
   }
-
-  await prisma.creditCost.create({
-    data: {
-      unit: "",
-      //1 usd = 100000000000 credits
-      //1 ada = 1000000 lovelace
-      //1 ada = 0.7 usd
-      //1 usd = 1428571 lovelace
-      //1 lovelace = 100000000000 / 1428571 credits = 700 credits
-      creditCostPerUnit: BigInt(70000),
-    },
-  });
+  await seedCreditCost();
 }
 
 main()

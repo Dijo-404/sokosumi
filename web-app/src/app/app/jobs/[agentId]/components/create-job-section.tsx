@@ -2,7 +2,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getCredits, getDescription } from "@/lib/db/extension/agent";
+import { getCreditsToDisplay, getDescription } from "@/lib/db/extension/agent";
 import { AgentWithRelations } from "@/lib/db/services/agent.service";
 import { JobInputsDataSchemaType } from "@/lib/job-input";
 
@@ -10,17 +10,20 @@ import { JobInputsForm } from "./job-input";
 
 interface CreateJobSectionProps {
   agent: AgentWithRelations;
+  agentPricing: number;
   inputSchema: JobInputsDataSchemaType;
 }
 
 export default function CreateJobSection({
   agent,
+  agentPricing,
   inputSchema,
 }: CreateJobSectionProps) {
   const t = useTranslations("App.Jobs.CreateJob");
 
   const description = getDescription(agent);
-  const credits = getCredits(agent);
+
+  const credits = getCreditsToDisplay(agentPricing);
 
   return (
     <div className="flex h-full min-h-[300px] flex-1 flex-col">

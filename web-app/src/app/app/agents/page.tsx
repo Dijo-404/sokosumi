@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { requireAuthentication } from "@/lib/auth/utils";
 import { AgentWithRelations, getAgents } from "@/lib/db/services/agent.service";
 import { getOrCreateFavoriteAgentList } from "@/lib/db/services/agentList.service";
+import { calculateAgentCreditCost } from "@/lib/db/services/credit.service";
 import { getCachedTags } from "@/lib/db/services/tag.service";
 
 import FilterSection from "./components/filter-section";
@@ -27,13 +28,20 @@ export default async function GalleryPage() {
   const { session } = await requireAuthentication();
 
   const agentList = await getOrCreateFavoriteAgentList(session.user.id);
+  const agentPriceList = await Promise.all(
+    agents.map(async (agent) => await calculateAgentCreditCost(agent)),
+  );
 
   return (
     <div className="w-full px-4 py-4 sm:px-8 xl:px-16">
       <div className="space-y-12">
         <FilterSection tags={tagNames} />
         {/* Agent Cards Grid */}
-        <FilteredAgents agents={agents} agentList={agentList} />
+        <FilteredAgents
+          agents={agents}
+          agentList={agentList}
+          agentPriceList={agentPriceList}
+        />
       </div>
     </div>
   );

@@ -32,6 +32,9 @@ export type AgentWithRelations = Prisma.AgentGetPayload<{
 export async function getAgents(): Promise<AgentWithRelations[]> {
   return await prisma.agent.findMany({
     include: agentInclude,
+    where: {
+      showOnFrontPage: true,
+    },
   });
 }
 

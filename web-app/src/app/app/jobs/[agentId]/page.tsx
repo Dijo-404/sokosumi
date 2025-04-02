@@ -10,6 +10,7 @@ import {
   getAgentInputSchema,
   getAgents,
 } from "@/lib/db/services/agent.service";
+import { calculateAgentCreditCost } from "@/lib/db/services/credit.service";
 import { getJobsByAgentId } from "@/lib/db/services/job.service";
 
 import Footer from "./components/footer";
@@ -69,14 +70,20 @@ export default async function JobPage({
   const { session } = await requireAuthentication();
   const jobs = await getJobsByAgentId(agentId, session.user.id);
 
+  const agentPrice = await calculateAgentCreditCost(agent);
+
   const inputSchema = await getAgentInputSchema(agentId);
 
   return (
     <div className="flex h-full flex-1 flex-col p-4 lg:p-6 xl:p-8">
-      <Header agent={agent} />
+      <Header agent={agent} agentPricing={agentPrice} />
       <div className="mt-6 flex flex-1 flex-col justify-center gap-4 lg:flex-row lg:overflow-hidden">
         <JobsTable jobs={jobs} />
-        <RightSection agent={agent} inputSchema={inputSchema} />
+        <RightSection
+          agent={agent}
+          agentPricing={agentPrice}
+          inputSchema={inputSchema}
+        />
       </div>
       <Footer legal={getLegal(agent)} />
     </div>
