@@ -18,20 +18,23 @@ export async function getCreditBalance(userId: string): Promise<number> {
 
 export async function creditTransactionSpend(
   userId: string,
-  amount: bigint,
-  includedFee: bigint,
+  credits: number,
+  includedFeeCredits: number,
   note: string | null = null,
   noteKey: string | null = null,
 ) {
-  if (amount <= 0) {
-    throw new Error("Amount must be greater than 0");
+  if (credits > 0) {
+    throw new Error("Credits must be greater than 0");
   }
-  if (includedFee < 0) {
-    throw new Error("Included fee must be greater than 0");
+  if (includedFeeCredits >= 0) {
+    throw new Error("Included fee credits must be greater than or equal to 0");
   }
-  if (includedFee > amount) {
-    throw new Error("Included fee must be less than amount");
+  if (includedFeeCredits > credits) {
+    throw new Error("Included fee credits must be less than total credits");
   }
+
+  const amount = convertCreditsToBaseUnits(credits);
+  const includedFee = convertCreditsToBaseUnits(includedFeeCredits);
 
   const newCreditTransaction = await prisma.$transaction(async (tx) => {
     const creditBalance = await tx.creditTransaction.aggregate({
@@ -69,10 +72,16 @@ const amountsSchema = z.array(
     amount: z.number().positive(),
   }),
 );
+
+/**
+ * Calculates the credit cost for an agent with fixed pricing
+ * @param agent - The agent with fixed pricing information
+ * @returns The total credit cost for the agent in number format, or 0 if no pricing amounts are available
+ * @throws Error if credit cost for a unit is not found or if fee percentage is negative
+ */
 export async function calculateAgentCreditCost(
   agent: AgentWithFixedPricing,
-  feePercentagePoints: number | undefined = undefined,
-) {
+): Promise<number> {
   const amounts = agent.pricing?.fixedPricing?.amounts?.map((amount) => ({
     unit: amount.unit,
     amount: Number(amount.amount),
@@ -80,27 +89,23 @@ export async function calculateAgentCreditCost(
   if (!amounts) {
     return 0;
   }
-  feePercentagePoints ??= getEnvPublicConfig().DEFAULT_NETWORK_FEE_PERCENTAGE;
-  return Number(
-    await calculateCreditCostAndValidateAmounts(amounts, feePercentagePoints),
-  );
+  return await calculateCreditCost(amounts);
 }
 
 /**
  * Calculate the credit cost for a job
  * @param amounts - The amounts to calculate the credit cost for
- * @param feePercentagePoints - The fee percentage points to add (or subtract if negative) can not be less than -100 (=100% cost reduction), no upper limit (100=+100% cost increase, 0=no fee)
  * @returns The credit cost for the job
+ * @throws Error if credit cost for a unit is not found or if fee percentage is negative
  */
-export async function calculateCreditCostAndValidateAmounts(
+export async function calculateCreditCost(
   amounts: { unit: string; amount: number }[],
-  feePercentagePoints: number | undefined = undefined,
-) {
-  feePercentagePoints ??= getEnvPublicConfig().DEFAULT_NETWORK_FEE_PERCENTAGE;
-  if (feePercentagePoints < -100) {
-    throw new Error("Added fee percentage must be greater than 0");
+): Promise<number> {
+  const feePercentagePoints = getEnvPublicConfig().NEXT_PUBLIC_FEE_PERCENTAGE;
+  if (feePercentagePoints < 0) {
+    throw new Error("Added fee percentage must be equal to or greater than 0");
   }
-  const feeMultiplier = Math.max(1 + feePercentagePoints / 100, 0);
+  const feeMultiplier = feePercentagePoints / 100;
 
   const amountsParsed = amountsSchema.parse(amounts);
 
@@ -114,11 +119,21 @@ export async function calculateCreditCostAndValidateAmounts(
     if (!creditCost) {
       throw new Error(`Credit cost not found for unit ${amount.unit}`);
     }
-    const cost =
-      Number(creditCost.creditCostPerUnit) * amount.amount * feeMultiplier;
-    //round up to the nearest integer
-    totalCreditCost += BigInt(Math.ceil(cost));
+    const cost = Number(creditCost.creditCostPerUnit) * amount.amount;
+    const fee = cost * feeMultiplier;
+    const totalCost = cost + fee;
+
+    // round up to the nearest integer
+    totalCreditCost += BigInt(Math.ceil(totalCost));
   }
 
-  return totalCreditCost;
+  return formatCreditsForDisplay(totalCreditCost);
+}
+
+export function formatCreditsForDisplay(credits: bigint): number {
+  return Number(credits) / 10 ** getEnvPublicConfig().NEXT_PUBLIC_CREDITS_BASE;
+}
+
+export function convertCreditsToBaseUnits(credits: number): bigint {
+  return BigInt(credits * 10 ** getEnvPublicConfig().NEXT_PUBLIC_CREDITS_BASE);
 }

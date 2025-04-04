@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
   getAverageStars,
-  getCreditsToDisplay,
   getDescription,
   getName,
   getResolvedImage,
@@ -82,8 +81,6 @@ function AgentCard({
   className,
 }: AgentCardProps) {
   const t = useTranslations("Components.Agents.AgentCard");
-  const displayPrice = getCreditsToDisplay(agentPrice);
-
   const averageStars = getAverageStars(agent);
   const description = getDescription(agent);
   return (
@@ -136,7 +133,7 @@ function AgentCard({
 
             <div>
               <p className="text-muted-foreground text-s">
-                {t("pricing", { price: displayPrice })}
+                {t("pricing", { price: agentPrice })}
               </p>
             </div>
           </div>

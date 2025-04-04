@@ -7,7 +7,6 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   getAuthorName,
-  getCreditsToDisplay,
   getDescription,
   getExampleOutput,
   getLegal,
@@ -97,9 +96,6 @@ function AgentDetails({
   agentList,
   className,
 }: AgentDetailsProps) {
-  const displayPrice = getCreditsToDisplay(agentPrice);
-  console.log("agentPrice", agentPrice);
-  console.log("displayPrice", displayPrice);
   const t = useTranslations("Components.Agents.AgentDetail");
 
   const legal = getLegal(agent);
@@ -140,7 +136,7 @@ function AgentDetails({
           </div>
           {/* Pricing */}
           <p className="pt-1 text-sm font-medium">
-            {t("pricing", { price: displayPrice })}
+            {t("pricing", { price: agentPrice })}
           </p>
           {/* Action Buttons */}
           <div className="mt-auto flex flex-col gap-3">

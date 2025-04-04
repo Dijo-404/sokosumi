@@ -6,6 +6,7 @@ import {
 import crypto from "crypto";
 
 import { getEnvSecrets } from "@/config/env.config";
+import { convertCreditsToBaseUnits } from "@/lib/db/services/credit.service";
 
 import { hashPassword } from "./util/password";
 
@@ -53,7 +54,7 @@ const seedUser = async (): Promise<string> => {
 
   const creditTransaction = await prisma.creditTransaction.create({
     data: {
-      amount: 100_000_000_000,
+      amount: convertCreditsToBaseUnits(1000.5123),
       type: CreditTransactionType.TOP_UP,
       userId: user.id,
       includedFee: 0,
@@ -71,11 +72,11 @@ const seedCreditCost = async () => {
       unit: "usdm",
     },
     update: {
-      creditCostPerUnit: BigInt(1),
+      creditCostPerUnit: convertCreditsToBaseUnits(1),
     },
     create: {
       unit: "usdm",
-      creditCostPerUnit: BigInt(1),
+      creditCostPerUnit: convertCreditsToBaseUnits(1),
     },
   });
   console.log("USDM credit cost seeded");
@@ -85,11 +86,11 @@ const seedCreditCost = async () => {
       unit: "",
     },
     update: {
-      creditCostPerUnit: BigInt(1_500_000), // 0.6666$ per ADA
+      creditCostPerUnit: convertCreditsToBaseUnits(1_500_000), // 0.6666$ per ADA
     },
     create: {
       unit: "",
-      creditCostPerUnit: BigInt(1_500_000), // 0.6666$ per ADA
+      creditCostPerUnit: convertCreditsToBaseUnits(1_500_000), // 0.6666$ per ADA
     },
   });
   console.log("Lovelace credit cost seeded");

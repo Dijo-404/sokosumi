@@ -1,7 +1,6 @@
 import { CreditTransactionType, Job, Prisma } from "@prisma/client";
 import { z } from "zod";
 
-import { getEnvPublicConfig } from "@/config/env.config";
 import { getPurchase, postPurchase } from "@/lib/api/generated/payment";
 import { getPaymentClient } from "@/lib/api/payment-service.client";
 import { getApiBaseUrl } from "@/lib/db/extension/agent";
@@ -9,10 +8,7 @@ import prisma from "@/lib/db/prisma";
 import { calculatedInputHash } from "@/lib/utils";
 
 import { getAgentById, getAgentPricing } from "./agent.service";
-import {
-  calculateCreditCostAndValidateAmounts,
-  creditTransactionSpend,
-} from "./credit.service";
+import { calculateCreditCost, creditTransactionSpend } from "./credit.service";
 
 const startJobSchema = z.object({
   input_hash: z.string(),
@@ -38,23 +34,18 @@ export async function startJob(
 
   const pricing = await getAgentPricing(agentId);
 
-  const creditCost = await calculateCreditCostAndValidateAmounts(
+  const creditCost = await calculateCreditCost(
     pricing.FixedPricing.Amounts.map((amount) => ({
       unit: amount.unit,
       amount: Number(amount.amount),
     })),
-    getEnvPublicConfig().DEFAULT_NETWORK_FEE_PERCENTAGE,
   );
 
   if (creditCost > maxAcceptedCreditCost) {
     throw new Error("Credit cost is too high");
   }
 
-  const creditTransaction = await creditTransactionSpend(
-    userId,
-    creditCost,
-    BigInt(0),
-  );
+  const creditTransaction = await creditTransactionSpend(userId, creditCost, 0);
 
   try {
     const baseUrl = getApiBaseUrl(agent);

@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { AgentBookmarkButton } from "@/components/agents/agent-bookmark-button";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getCreditsToDisplay, getName } from "@/lib/db/extension/agent";
+import { getName } from "@/lib/db/extension/agent";
 import { AgentWithRelations } from "@/lib/db/services/agent.service";
 import { AgentListWithAgent } from "@/lib/db/services/agentList.service";
 
@@ -76,7 +76,7 @@ export default function Header({
       </h1>
       <div className="flex w-full flex-row items-center justify-end gap-5">
         <div className="w-full text-end text-base">
-          {t("price", { price: getCreditsToDisplay(agentPricing) })}
+          {t("price", { price: agentPricing })}
         </div>
         <Button
           className="gap-2"
