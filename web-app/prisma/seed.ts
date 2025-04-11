@@ -2,11 +2,7 @@ import crypto from "crypto";
 
 import { getEnvSecrets } from "@/config/env.config";
 import { convertCreditsToBaseUnits } from "@/lib/db/utils/credit.utils";
-import {
-  CreditTransactionStatus,
-  CreditTransactionType,
-  PrismaClient,
-} from "@/prisma/generated/client";
+import { PrismaClient } from "@/prisma/generated/client";
 
 import { hashPassword } from "./util/password";
 
@@ -55,10 +51,7 @@ const seedUser = async (): Promise<string> => {
   const creditTransaction = await prisma.creditTransaction.create({
     data: {
       amount: convertCreditsToBaseUnits(1000.5123),
-      type: CreditTransactionType.TOP_UP,
       userId: user.id,
-      includedFee: 0,
-      status: CreditTransactionStatus.SUCCEEDED,
     },
   });
   console.log(`Credit transaction created with id ${creditTransaction.id}`);
