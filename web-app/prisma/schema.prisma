@@ -315,8 +315,6 @@ model Agent {
 
   tags         Tag[] @relation("AgentTag")
   overrideTags Tag[] @relation("AgentTagOverride")
-
-  @@index([blockchainIdentifier])
 }
 
 model Lock {
@@ -396,8 +394,6 @@ model FiatTransaction {
 
   creditTransaction   CreditTransaction? @relation(fields: [creditTransactionId], references: [id])
   creditTransactionId String?            @unique
-
-  @@index([servicePaymentId])
 }
 
 enum FiatTransactionStatus {
