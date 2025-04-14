@@ -21,8 +21,8 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1(react-hook-form@7.55.0(react@19.1.0))
       '@icons-pack/react-simple-icons':
-        specifier: ^12.5.0
-        version: 12.5.0(react@19.1.0)
+        specifier: ^12.6.0
+        version: 12.6.0(react@19.1.0)
       '@prisma/client':
         specifier: ^6.6.0
         version: 6.6.0(prisma@6.6.0(typescript@5.8.3))(typescript@5.8.3)
@@ -696,8 +696,8 @@ packages:
     resolution: {integrity: sha512-xeO57FpIu4p1Ri3Jq/EXq4ClRm86dVF2z/+kvFnyqVYRavTZmaFaUBbWCOuuTh0o/g7DSsk6kc2vrS4Vl5oPOQ==}
     engines: {node: '>=18.18'}
 
-  '@icons-pack/react-simple-icons@12.5.0':
-    resolution: {integrity: sha512-pjaK1q07KYMJ9haymuyNJneJkBO5HqZlLdKNdOJp3ArqowV5dS3nMwaOEsyOYbzdQ4t7ql4++zHtkBhfw2xSVw==}
+  '@icons-pack/react-simple-icons@12.6.0':
+    resolution: {integrity: sha512-CQJbCvJHn1GpnyJQrkXNVXSS5ct/MPzcmr2m8HUe7gCHUVG7Hl2PwrIIAvCcJ5hZ+3CAYi4WoWERoFj8DzGl/A==}
     peerDependencies:
       react: ^16.13 || ^17 || ^18 || ^19
 
@@ -5010,7 +5010,7 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.2': {}
 
-  '@icons-pack/react-simple-icons@12.5.0(react@19.1.0)':
+  '@icons-pack/react-simple-icons@12.6.0(react@19.1.0)':
     dependencies:
       react: 19.1.0
 
