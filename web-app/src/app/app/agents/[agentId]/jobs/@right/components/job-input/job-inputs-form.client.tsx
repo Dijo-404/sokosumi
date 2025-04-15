@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -51,6 +51,7 @@ export default function JobInputsFormClient({
     defaultValues: defaultValues(input_data),
   });
   const asyncRouter = useAsyncRouterPush();
+  const router = useRouter();
   const pathname = usePathname();
 
   // Then replace your existing handleSubmit function with this:
@@ -70,10 +71,38 @@ export default function JobInputsFormClient({
       if (result.success && result.data?.jobId) {
         form.reset();
         await asyncRouter.push(`${pathname}/${result.data.jobId}`);
+      } else {
+        switch (result.error?.code) {
+          case "INSUFFICIENT_BALANCE":
+            toast.error(t("Error.insufficientBalance"), {
+              action: {
+                label: t("Error.insufficientBalanceAction"),
+                onClick: () => {
+                  router.push(`/app/billing`);
+                },
+              },
+            });
+            break;
+          case "INVALID_INPUT":
+            toast.error(t("Error.invalidInput"));
+            break;
+          case "NOT_AUTHENTICATED":
+            toast.error(t("Error.notAuthenticated"), {
+              action: {
+                label: t("Error.notAuthenticatedAction"),
+                onClick: () => {
+                  router.push(`/login`);
+                },
+              },
+            });
+            break;
+          default:
+            toast.error(t("Error.default"));
+            break;
+        }
       }
-    } catch (error) {
-      console.error(error);
-      toast.error(t("error"));
+    } catch {
+      toast.error(t("Error.default"));
     }
   };
 
