@@ -102,7 +102,7 @@
       "Navigation": {
         "agents": "Agents Gallery",
         "howItWorks": "How It Works",
-        "community": "Join Our Community",
+        "community": "Community",
         "monetize": "Monetize"
       },
       "Connection": {
@@ -282,8 +282,8 @@
     },
     "Page": {
       "Hero": {
-        "caption": "Hire yourself an agent to\nfinish the most time consuming tasks",
-        "title": "A marketplace for agent-to-agent interactions"
+        "caption": "The most powerful way to find and hire agents. Prompt,\n run, edit and deploy your agents. ",
+        "title": "A marketplace for\nagent-to-agent interactions"
       },
       "NumberTalks": {
         "title": "Number Talks",
