@@ -9,13 +9,19 @@ import {
   getJobByIdWithCreditTransaction,
   JobErrorNoteKeys,
   prisma,
+  updateJobStatusToAgentConnectionFailed,
   updateJobStatusToCompleted,
-  updateJobStatusToDisputed,
+  updateJobStatusToDisputeRequested,
+  updateJobStatusToDisputeResolved,
   updateJobStatusToFailed,
+  updateJobStatusToInputRequired,
   updateJobStatusToPaymentFailed,
+  updateJobStatusToPaymentNodeConnectionFailed,
+  updateJobStatusToPaymentPending,
   updateJobStatusToProcessing,
-  updateJobStatusToRefunded,
   updateJobStatusToRefundRequested,
+  updateJobStatusToRefundResolved,
+  updateJobStatusToUnknown,
 } from "@/lib/db";
 import { JobInputData } from "@/lib/job-input";
 import { calculateInputHash } from "@/lib/utils";
@@ -135,41 +141,43 @@ export async function syncJobStatus(job: Job) {
     job.paymentId,
   );
   if (!onChainStateResult.ok) {
-    await updateJobStatusToFailed(
-      job.id,
-      onChainStateResult.error,
-      JobErrorNoteKeys.SyncOnChainStateFailed,
-    );
+    await updateJobStatusToPaymentNodeConnectionFailed(job.id);
     throw new Error("Failed to get payment on-chain status");
   }
-  const onChainState = onChainStateResult.data;
+  const onChainState = onChainStateResult.data.onChainState;
+  const errorType = onChainStateResult.data.errorType;
 
   // get the job status from the agent
   const jobStatusResult = await getAgentJobStatus(agent, job.agentJobId);
   if (!jobStatusResult.ok) {
-    await updateJobStatusToFailed(
-      job.id,
-      jobStatusResult.error,
-      JobErrorNoteKeys.SyncJobStatusFailed,
-    );
+    await updateJobStatusToAgentConnectionFailed(job.id);
     throw new Error("Failed to get job status");
   }
   const jobStatusResponse = jobStatusResult.data;
-
   switch (onChainState) {
     case null: {
-      console.warn("Payment On-chain state is null");
-      return;
+      if (errorType === null) {
+        await updateJobStatusToPaymentPending(job.id);
+      } else {
+        await updateJobStatusToPaymentFailed(job.id, errorType);
+      }
+      break;
     }
     case "FundsLocked": {
       if (jobStatusResponse.status === "running") {
         await updateJobStatusToProcessing(job.id);
       }
-      return;
+      if (jobStatusResponse.status === "awaiting_input") {
+        await updateJobStatusToInputRequired(job.id);
+      }
+      if (jobStatusResponse.status === "failed") {
+        await updateJobStatusToFailed(job.id);
+      }
+      break;
     }
     case "RefundRequested": {
       await updateJobStatusToRefundRequested(job.id);
-      return;
+      break;
     }
     case "RefundWithdrawn": {
       await prisma.$transaction(async (tx) => {
@@ -179,54 +187,50 @@ export async function syncJobStatus(job: Job) {
         }
         const creditTransaction = jobToRefund.creditTransaction;
 
-        await updateJobStatusToRefunded(
+        await updateJobStatusToRefundResolved(
           job.id,
           jobToRefund.userId,
           creditTransaction,
           tx,
         );
       });
-      return;
+      break;
     }
     case "Disputed": {
-      await updateJobStatusToDisputed(job.id);
-      return;
+      await updateJobStatusToDisputeRequested(job.id);
+      break;
     }
     case "DisputedWithdrawn": {
-      // await updateJobStatus(job.id, { status: JobStatus.REFUND_FAILED });
-      // TODO:
-      // Not sure what to do here.
-      return;
+      await updateJobStatusToDisputeResolved(job.id);
+      break;
     }
     case "FundsOrDatumInvalid": {
-      await updateJobStatusToPaymentFailed(job.id);
-      return;
+      await updateJobStatusToPaymentFailed(job.id, errorType);
+      break;
     }
     case "ResultSubmitted":
     case "Withdrawn": {
-      if (
-        jobStatusResponse.status === "completed" ||
-        jobStatusResponse.status == "failed"
-      ) {
+      if (jobStatusResponse.status === "completed") {
         const output = JSON.stringify(jobStatusResponse);
         await updateJobStatusToCompleted(job.id, output);
-        return;
+      } else if (jobStatusResponse.status === "failed") {
+        await updateJobStatusToFailed(job.id);
       } else {
-        await updateJobStatusToFailed(
+        await updateJobStatusToUnknown(
           job.id,
           `Job status is ${jobStatusResponse.status} with on-chain state ${onChainState}`,
-          JobErrorNoteKeys.JobStatusMismatch,
+          JobErrorNoteKeys.StatusMismatch,
         );
-        return;
       }
+      break;
     }
     default: {
-      await updateJobStatusToFailed(
+      await updateJobStatusToUnknown(
         job.id,
-        "Unknown on-chain state: " + onChainState,
-        JobErrorNoteKeys.ManualOnChainState,
+        `Unknown on-chain state ${onChainState}`,
+        JobErrorNoteKeys.Unknown,
       );
-      return;
+      break;
     }
   }
 }

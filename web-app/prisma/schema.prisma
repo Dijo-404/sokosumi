@@ -346,6 +346,8 @@ model Job {
   startedAt  DateTime  @default(now())
   finishedAt DateTime?
 
+  errorType String?
+
   errorNote    String?
   errorNoteKey String?
 
@@ -363,15 +365,25 @@ model Job {
 }
 
 enum JobStatus {
+  AGENT_CONNECTION_FAILED
+  PAYMENT_NODE_CONNECTION_FAILED
+
   PAYMENT_PENDING
   PAYMENT_FAILED
+
+  INPUT_REQUIRED
+
   PROCESSING
   COMPLETED
   FAILED
+
+  DISPUTE_REQUESTED
+  DISPUTE_RESOLVED
+
   REFUND_REQUESTED
-  DISPUTED
-  REFUNDED
-  REFUND_FAILED
+  REFUND_RESOLVED
+
+  UNKNOWN
 }
 
 model CreditCost {

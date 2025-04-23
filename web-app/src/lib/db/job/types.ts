@@ -22,9 +22,6 @@ export type JobWithCreditTransaction = Prisma.JobGetPayload<{
 }>;
 
 export enum JobErrorNoteKeys {
-  "SyncOnChainStateFailed" = "Job.SyncOnChainStateFailed",
-  "SyncJobStatusFailed" = "Job.SyncJobStatusFailed",
-  "FundsOrDatumInvalid" = "Job.FundsOrDatumInvalid",
-  "JobStatusMismatch" = "Job.JobStatusMismatch",
-  "ManualOnChainState" = "Job.ManualOnChainState",
+  StatusMismatch = "Job.StatusMismatch",
+  Unknown = "Job.UnknownState",
 }
