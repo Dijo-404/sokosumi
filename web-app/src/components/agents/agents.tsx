@@ -64,7 +64,10 @@ function Agents({
 }: AgentsProps) {
   return (
     <div
-      className={cn("flex w-full flex-wrap justify-center gap-6", className)}
+      className={cn(
+        "flex flex-wrap justify-between gap-3 space-y-4",
+        className,
+      )}
     >
       {agents.map((agent, index) => (
         <AgentCard

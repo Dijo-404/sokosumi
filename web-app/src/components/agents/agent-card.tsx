@@ -1,12 +1,16 @@
 "use client";
 
-import { CheckCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
 import {
   AgentListWithAgent,
   AgentWithRelations,
@@ -19,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { AgentBookmarkButton } from "./agent-bookmark-button";
+import { AgentVerifiedBadge } from "./agent-verified-badge";
 
 interface AgentCardSkeletonProps {
   className?: string | undefined;
@@ -75,7 +80,7 @@ function AgentCard({
     <Link href={`${pathname}/${agent.id}`}>
       <Card
         className={cn(
-          "group bg-background relative flex w-72 flex-col gap-4 rounded-lg border-none p-0 shadow-none",
+          "group relative flex h-72 w-72 flex-col justify-between gap-0 rounded-lg border-none p-0 shadow-none",
           className,
         )}
       >
@@ -92,39 +97,46 @@ function AgentCard({
           </div>
         )}
 
-        {/* Image */}
-        <div className="shadow-foreground/10 aspect-[1.6] w-full overflow-hidden rounded-lg shadow-lg">
-          <Image
-            src={getAgentResolvedImage(agent)}
-            alt={`${getAgentName(agent)} image`}
-            width={400}
-            height={250}
-            className="h-full w-full object-cover transition-transform group-hover:scale-105"
-          />
+        <div className="flex flex-1 flex-col">
+          {/* Image */}
+          <CardHeader className="p-0">
+            <div className="shadow-foreground/10 w-72 overflow-hidden rounded-lg shadow-lg">
+              <Image
+                src={getAgentResolvedImage(agent)}
+                alt={`${getAgentName(agent)} image`}
+                width={400}
+                height={250}
+                className="aspect-[1.6] w-full object-cover transition-transform group-hover:scale-105"
+              />
+            </div>
+          </CardHeader>
+
+          {/* Content */}
+          <CardDescription className="flex-1 p-0 pt-1">
+            <div className="relative">
+              <div className="flex items-center gap-1">
+                <h3 className="text-primary line-clamp-1 text-base leading-6 font-medium">
+                  {getAgentName(agent)}
+                </h3>
+                <AgentVerifiedBadge />
+              </div>
+            </div>
+            {description && (
+              <p className="text-muted-foreground line-clamp-2 text-sm overflow-ellipsis">
+                {description}
+              </p>
+            )}
+          </CardDescription>
         </div>
 
-        {/* Content */}
-        <div className="pt-1, px-4">
-          <div className="mb-2 flex items-center gap-2">
-            <h3 className="font-medium">{getAgentName(agent)}</h3>
-            <div className="flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-1">
-              <CheckCheck className="h-4 w-4 text-green-500" />
-              <span className="text-muted-foreground text-xs uppercase">
-                {"Verified"}
-              </span>
-            </div>
-          </div>
-          {description && (
-            <p className="text-muted-foreground mb-4 text-sm">{description}</p>
-          )}
-          <div className="flex items-center gap-2 text-sm">
-            <span className="font-medium">
-              {t("pricing", {
-                price: convertCentsToCredits(agentCreditsPrice.cents),
-              })}
-            </span>
-          </div>
-        </div>
+        {/* Pricing */}
+        <CardFooter className="pt-auto mt-auto px-0">
+          <span className="font-medium">
+            {t("pricing", {
+              price: convertCentsToCredits(agentCreditsPrice.cents),
+            })}
+          </span>
+        </CardFooter>
       </Card>
     </Link>
   );

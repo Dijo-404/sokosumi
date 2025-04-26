@@ -1,9 +1,9 @@
-import { CheckCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
 import { BadgeCloud } from "@/components/agents";
+import { AgentVerifiedBadge } from "@/components/agents/agent-verified-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -53,9 +53,9 @@ export function FeaturedAgent({ agent, creditsPrice }: FeaturedAgentProps) {
   const t = useTranslations("Landing.Agents.FeaturedAgent");
 
   return (
-    <div className="flex flex-col items-center gap-8 md:flex-row">
+    <div className="flex flex-col items-center gap-8 md:h-96 md:flex-row">
       {/* Image Section - 1/2 width */}
-      <div className="relative aspect-16/9 w-full md:w-1/2">
+      <div className="relative h-72 w-full overflow-clip md:h-full md:w-1/2">
         <Image
           src={getAgentResolvedImage(agent)}
           alt={`${getAgentName(agent)} image`}
@@ -67,24 +67,23 @@ export function FeaturedAgent({ agent, creditsPrice }: FeaturedAgentProps) {
       </div>
 
       {/* Text Content Section - 1/2 width */}
-      <div className="w-full space-y-6 md:w-1/2">
-        <div className="space-y-4">
+      <div className="flex w-full flex-col gap-12 md:w-1/2">
+        <div>
           <BadgeCloud tags={getAgentTags(agent)} />
-          <div className="flex items-center gap-2">
-            <h3 className="text-5xl font-light">{getAgentName(agent)}</h3>
-            <div className="flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-1">
-              <CheckCheck className="h-4 w-4 text-green-500" />
-              <span className="text-muted-foreground text-xs uppercase">
-                {"Verified"}
-              </span>
+          <div className="relative">
+            <div className="flex items-start gap-1">
+              <h3 className="line-clamp-2 text-5xl leading-tight font-light">
+                {getAgentName(agent)}
+              </h3>
+              <AgentVerifiedBadge className="m-auto" />
             </div>
           </div>
-        </div>
-        <div className="text-muted-foreground text-5xl font-light">
-          {getAgentDescription(agent)}
+          <div className="text-muted-foreground line-clamp-3 text-5xl leading-tight font-light">
+            {getAgentDescription(agent)}
+          </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4 pt-8">
+        <div className="flex items-center justify-between gap-4">
           <div className="text-base">
             <span className="font-medium">
               {t("pricing", {
