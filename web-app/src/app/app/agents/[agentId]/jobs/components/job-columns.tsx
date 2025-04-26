@@ -2,6 +2,7 @@ import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { useFormatter, useTranslations } from "next-intl";
 
 import { DataTableColumnHeader } from "@/components/data-table";
+import { MiddleTruncate } from "@/components/middle-truncate";
 import { JobWithRelations } from "@/lib/db";
 
 import JobStatusBadge from "./job-status-badge";
@@ -15,7 +16,7 @@ export function getJobColumns(
   return {
     startedAtColumn: columnHelper.accessor("startedAt", {
       id: "startedAt",
-      minSize: 100,
+      minSize: 80,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t("Header.started")} />
       ),
@@ -39,7 +40,7 @@ export function getJobColumns(
         <DataTableColumnHeader column={column} title={t("Header.status")} />
       ),
       cell: ({ row }) => (
-        <div className="p-2">
+        <div>
           <JobStatusBadge status={row.original.status} />
         </div>
       ),
@@ -49,14 +50,16 @@ export function getJobColumns(
 
     idColumn: columnHelper.accessor("id", {
       id: "id",
-      minSize: 200,
-      enableResizing: true,
+      minSize: 100,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t("Header.id")} />
       ),
       cell: ({ row }) => (
-        <div className="p-2 whitespace-nowrap">
-          <div className="font-mono text-xs">{row.original.id}</div>
+        <div>
+          <MiddleTruncate
+            text={row.original.id}
+            className="font-mono text-xs"
+          />
         </div>
       ),
       enableSorting: true,
