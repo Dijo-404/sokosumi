@@ -237,7 +237,7 @@ function AgentCard({
         <div className={cn(agentCardContentVariants({ size }))}>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <h3 className="text-primary truncate text-base leading-6 font-medium">
+              <h3 className="text-foreground truncate text-base leading-6 font-medium">
                 {getAgentName(agent)}
               </h3>
               <AgentVerifiedBadge />
@@ -249,7 +249,7 @@ function AgentCard({
           {/* View Button */}
           <div className={cn(agentCardViewButtonContainerVariants({ size }))}>
             <AgentModalTrigger agentId={agent.id}>
-              <Button variant="outline" className="text-xs" size="sm">
+              <Button variant="secondary" className="text-xs" size="sm">
                 {t("view")}
               </Button>
             </AgentModalTrigger>
@@ -266,11 +266,11 @@ function AgentCard({
               </p>
             </div>
             <div className="flex items-center gap-1.5">
-              <AgentModalTrigger agentId={agent.id}>
-                <Button variant="outline" size="lg">
+              <Button variant="secondary" size="lg" asChild>
+                <AgentModalTrigger agentId={agent.id}>
                   {t("view")}
-                </Button>
-              </AgentModalTrigger>
+                </AgentModalTrigger>
+              </Button>
               <AgentHireButton agentId={agent.id} />
             </div>
           </div>
