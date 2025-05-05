@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { Prisma } from "@/prisma/generated/client";
+import { AgentStatus, Prisma } from "@/prisma/generated/client";
 
 import {
   agentInclude,
@@ -11,12 +11,20 @@ import {
   AgentWithRelations,
 } from "./types";
 
-export async function getAgents(
+export async function getOnlineAgents(
+  tx: Prisma.TransactionClient = prisma,
+): Promise<AgentWithRelations[]> {
+  return await getAgentsWithStatus(AgentStatus.ONLINE, tx);
+}
+
+async function getAgentsWithStatus(
+  status: AgentStatus,
   tx: Prisma.TransactionClient = prisma,
 ): Promise<AgentWithRelations[]> {
   return await tx.agent.findMany({
     include: agentInclude,
     where: {
+      status,
       isShown: true,
     },
   });
