@@ -10,8 +10,8 @@ interface FunctionResponse {
 }
 
 // Generic function for API calls
-async function callApi(apiUrlString: string, endpoint: string) {
-  const url = new URL(endpoint, apiUrlString);
+async function callApi(baseUrl: string, endpoint: string) {
+  const url = new URL(endpoint, baseUrl);
   const adminKey = process.env.ADMIN_KEY;
   if (!adminKey) {
     throw new Error("ADMIN_KEY environment variable not set");
@@ -31,12 +31,11 @@ async function callApi(apiUrlString: string, endpoint: string) {
 export async function main(_args: unknown): Promise<FunctionResponse> {
   try {
     // Get API endpoint from environment variable
-    const apiUrlString = process.env.SOKOSUMI_API_URL;
-
-    if (!apiUrlString) {
+    const baseUrl = process.env.SOKOSUMI_URL;
+    if (!baseUrl) {
       return {
         statusCode: 400,
-        body: { error: "SOKOSUMI_API_URL environment variable not set" },
+        body: { error: "SOKOSUMI_URL environment variable not set" },
       };
     }
 
@@ -44,8 +43,8 @@ export async function main(_args: unknown): Promise<FunctionResponse> {
     let agentsData, jobsData;
     try {
       [agentsData, jobsData] = await Promise.all([
-        callApi(apiUrlString, "/sync/agents"),
-        callApi(apiUrlString, "/sync/jobs"),
+        callApi(baseUrl, "api/sync/agents"),
+        callApi(baseUrl, "api/sync/jobs"),
       ]);
     } catch (err) {
       return {
