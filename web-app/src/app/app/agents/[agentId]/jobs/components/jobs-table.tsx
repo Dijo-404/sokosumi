@@ -46,7 +46,7 @@ export default function JobsTable({ jobs }: JobsTableProps) {
         });
       }}
       containerClassName={cn(
-        "w-full lg:w-[max(480px,32%)] rounded-xl bg-muted/50",
+        "job-table-width min-h-[300px] rounded-xl bg-muted/50",
       )}
       defaultSort={[
         {
