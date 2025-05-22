@@ -358,12 +358,29 @@
           "submit": "Register",
           "success": "Register successful",
           "error": "Register failed",
+          "errorMember": "Failed to create organization member",
           "Fields": {
             "Email": {
               "placeholder": "Email"
             },
             "Name": {
               "placeholder": "Name"
+            },
+            "Organization": {
+              "placeholder": "Select an organization",
+              "search": "Search organizations",
+              "create": "Create {organization}",
+              "createPlaceholder": "New organization name",
+              "success": "Organization created successfully",
+              "error": "Failed to create organization",
+              "Schema": {
+                "Name": {
+                  "min": "Organization name must be at least 2 characters.",
+                  "max": "Organization name must be at most 50 characters.",
+                  "invalid": "Organization name must be a valid string.",
+                  "required": "Organization name is required"
+                }
+              }
             },
             "Password": {
               "placeholder": "Password"
@@ -630,6 +647,10 @@
           "max": "Name must be at most 128 characters.",
           "invalid": "Name must be a valid string.",
           "required": "Name is required"
+        },
+        "Organization": {
+          "invalid": "Organization must be a valid string.",
+          "required": "Organization is required"
         },
         "Password": {
           "invalid": "Password must be a valid string.",

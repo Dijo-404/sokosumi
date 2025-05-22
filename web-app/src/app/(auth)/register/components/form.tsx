@@ -13,9 +13,15 @@ import {
   signUpFormSchema,
   SignUpFormSchemaType,
 } from "@/auth/register/data";
+import { createOrganizationMember } from "@/lib/actions";
 import { authClient } from "@/lib/auth/auth.client";
+import { OrganizationWithMembersCount } from "@/lib/db";
 
-export default function SignUpForm() {
+interface SignUpFormProps {
+  organizations: OrganizationWithMembersCount[];
+}
+
+export default function SignUpForm({ organizations }: SignUpFormProps) {
   const t = useTranslations("Auth.Pages.SignUp.Form");
 
   const router = useRouter();
@@ -28,11 +34,12 @@ export default function SignUpForm() {
       name: "",
       password: "",
       confirmPassword: "",
+      organizationId: "",
     },
   });
 
   const onSubmit = async (values: SignUpFormSchemaType) => {
-    await authClient.signUp.email(
+    const userResult = await authClient.signUp.email(
       {
         email: values.email,
         name: values.name,
@@ -40,9 +47,6 @@ export default function SignUpForm() {
         callbackURL: "/app",
       },
       {
-        onRequest: (ctx) => {
-          console.log("ctx onRequest", ctx);
-        },
         onError: (ctx) => {
           switch (ctx.error.code) {
             case "USER_ALREADY_EXISTS":
@@ -60,12 +64,23 @@ export default function SignUpForm() {
               break;
           }
         },
-        onSuccess: () => {
-          toast.success(t("success"));
-          router.push("/login");
-        },
       },
     );
+    if (!userResult.data?.user) {
+      return;
+    }
+
+    // create member using organization
+    const memberResult = await createOrganizationMember(
+      userResult.data.user.id,
+      values.organizationId,
+    );
+    if (!memberResult.success) {
+      toast.error(t("errorMember"));
+    } else {
+      toast.success(t("success"));
+    }
+    router.push("/login");
   };
 
   return (
@@ -74,6 +89,7 @@ export default function SignUpForm() {
       formData={signUpFormData}
       namespace="Auth.Pages.SignUp.Form"
       onSubmit={onSubmit}
+      organizations={organizations}
     >
       <div className="flex flex-col gap-4">
         <SubmitButton form={form} label={t("submit")} className="w-full" />
