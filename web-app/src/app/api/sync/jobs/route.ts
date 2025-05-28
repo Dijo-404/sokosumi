@@ -74,32 +74,41 @@ export async function POST(request: Request) {
 async function syncAllJobs() {
   const runningDbUpdates: Promise<void>[] = [];
 
-  let jobs = await prisma.job.findMany({
+  const jobs = await prisma.job.findMany({
     where: {
       OR: [
+        // Filter out jobs that are finalized
         {
           onChainStatus: {
             notIn: finalizedOnChainJobStatuses,
           },
         },
+        // Filter out jobs with a failed payment and unable to submit result
         {
           onChainStatus: null,
-          nextActionErrorType: null,
+          submitResultTime: {
+            gt: new Date(Date.now() - 1000 * 60 * 10), // 10min grace period
+          },
+        },
+        // Filter out jobs that are already completed and the external dispute unlock time has passed
+        {
+          onChainStatus: {
+            not: OnChainJobStatus.RESULT_SUBMITTED,
+          },
+          agentJobStatus: {
+            not: AgentJobStatus.COMPLETED,
+          },
+          externalDisputeUnlockTime: {
+            gt: new Date(Date.now() - 1000 * 60 * 10), // 10min grace period
+          },
+        },
+        // Get jobs that are missing input hash
+        // Remove in July 2025
+        {
+          inputHash: null,
         },
       ],
     },
-  });
-
-  // Filter out jobs that are already completed and the external dispute unlock time has passed
-  const nowTimestamp = Date.now();
-  jobs = jobs.filter((job) => {
-    if (
-      job.onChainStatus === OnChainJobStatus.RESULT_SUBMITTED &&
-      job.agentJobStatus === AgentJobStatus.COMPLETED
-    ) {
-      return job.externalDisputeUnlockTime.getTime() > nowTimestamp;
-    }
-    return true;
   });
 
   // Process 5 jobs at a time
