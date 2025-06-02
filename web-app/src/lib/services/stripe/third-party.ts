@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import Stripe from "stripe";
 
 import { getEnvSecrets } from "@/config/env.config"; // Ensure this path is correct
+import { setStripeCustomerId } from "@/lib/db";
 import { User } from "@/prisma/generated/client";
 
 const stripe = new Stripe(getEnvSecrets().STRIPE_SECRET_KEY);
@@ -58,14 +59,13 @@ export async function createCheckoutSession(
   fiatTransactionId: string,
   priceId: string,
   quantity: number,
-  coupon: string | null,
+  promotionCode: string | null,
 ): Promise<{
   id: string;
   url: string;
 }> {
   const headerList = await headers();
   const origin = headerList.get("origin");
-
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     line_items: [
@@ -74,8 +74,8 @@ export async function createCheckoutSession(
         quantity: quantity,
       },
     ],
-    ...(coupon
-      ? { discounts: [{ coupon: coupon }] }
+    ...(promotionCode
+      ? { discounts: [{ promotion_code: promotionCode }] }
       : { allow_promotion_codes: true }),
     client_reference_id: fiatTransactionId,
     ...(user.stripeCustomerId
@@ -97,4 +97,32 @@ export async function constructEvent(req: Request, stripeSignature: string) {
     stripeSignature,
     getEnvSecrets().STRIPE_WEBHOOK_SECRET,
   );
+}
+
+export async function createCustomer(user: User): Promise<string> {
+  const customer = await stripe.customers.create({ email: user.email });
+  await setStripeCustomerId(user.id, customer.id);
+  return customer.id;
+}
+
+export async function getOrCreatePromotionCode(
+  customerId: string,
+  couponId: string,
+  maxRedemptions: number = 1,
+  metadata?: Record<string, string>,
+): Promise<Stripe.PromotionCode> {
+  const promotionCodes = await stripe.promotionCodes.list({
+    coupon: couponId,
+    customer: customerId,
+    limit: 1,
+  });
+  if (promotionCodes.data.length > 0) {
+    return promotionCodes.data[0];
+  }
+  return await stripe.promotionCodes.create({
+    customer: customerId,
+    coupon: couponId,
+    max_redemptions: maxRedemptions,
+    metadata,
+  });
 }
