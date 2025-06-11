@@ -18,13 +18,13 @@ function AgentDetailSection3({ agent }: { agent: AgentWithRelations }) {
     <div className="flex flex-col gap-10">
       {agentDescription && (
         <div>
-          <p className="mb-2 text-xs uppercase">{t("title1")}</p>
+          <p className="mb-2 text-xs uppercase">{t("description")}</p>
           <Markdown>{agentDescription}</Markdown>
         </div>
       )}
       {tags.length > 0 && (
         <div>
-          <p className="mb-2 text-xs uppercase">{t("title2")}</p>
+          <p className="mb-2 text-xs uppercase">{t("tags")}</p>
           <AgentBadgeCloud tags={tags} />
         </div>
       )}
