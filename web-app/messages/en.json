@@ -121,7 +121,7 @@
         "role": "Role",
         "actions": "Actions"
       },
-      "Actions": {
+      "MemberActions": {
         "remove": "Remove",
         "changeToAdmin": "Change to Admin",
         "changeToMember": "Change to Member",
@@ -142,6 +142,20 @@
             "removeError": "Failed to remove member"
           }
         }
+      },
+      "InvitationActions": {
+        "resend": "Resend Invitation",
+        "cancel": "Cancel Invitation",
+        "CancelModal": {
+          "title": "Cancel Invitation",
+          "description": "Are you sure you want to cancel the invitation of {email}?",
+          "confirm": "Confirm",
+          "cancel": "Cancel",
+          "success": "Invitation canceled successfully",
+          "error": "Failed to cancel invitation"
+        },
+        "resendSuccess": "Invitation resent successfully",
+        "resendError": "Failed to resend invitation"
       }
     },
     "Breadcrumb": {
@@ -153,7 +167,8 @@
     "Organizations": {
       "Role": {
         "admin": "Admin",
-        "member": "Member"
+        "member": "Member",
+        "pending": "Pending"
       },
       "RequiredEmailDomains": {
         "allowAll": "Allow all email domains"
@@ -215,7 +230,6 @@
             "notAuthenticated": "You must be logged in to invite members.",
             "unauthorized": "You must be an admin to invite members.",
             "invitationLimitReached": "You have reached the invitation limit.",
-            "userAlreadyInvited": "User is already invited to this organization.",
             "userAlreadyMember": "User is already a member of this organization."
           },
           "Fields": {

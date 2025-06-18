@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
@@ -26,6 +27,8 @@ export default function OrganizationMemberInviteForm({
 }: OrganizationMemberInviteFormProps) {
   const t = useTranslations("Components.Organizations.InviteMemberModal.Form");
 
+  const router = useRouter();
+
   const onSubmit = async (values: InviteFormSchemaType) => {
     await authClient.organization.inviteMember(
       {
@@ -40,9 +43,6 @@ export default function OrganizationMemberInviteForm({
             case "USER_IS_ALREADY_A_MEMBER_OF_THIS_ORGANIZATION":
               toast.error(t("Errors.userAlreadyMember"));
               break;
-            case "USER_IS_ALREADY_INVITED_TO_THIS_ORGANIZATION":
-              toast.error(t("Errors.userAlreadyInvited"));
-              break;
             case "YOU_ARE_NOT_ALLOWED_TO_INVITE_USER_WITH_THIS_ROLE":
               toast.error(t("Errors.unauthorized"));
               break;
@@ -56,6 +56,7 @@ export default function OrganizationMemberInviteForm({
         onSuccess: () => {
           toast.success(t("success"));
           onOpenChange(false);
+          router.refresh();
         },
       },
     );

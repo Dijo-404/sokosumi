@@ -14,16 +14,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import {
-  MemberAction,
-  useMemberActionsModalContext,
-} from "./member-actions-modal-context";
+import { useInvitationActionsModalContext } from "./invitation-actions-modal-context";
 
-export default function MemberActionsModal() {
-  const t = useTranslations("Components.MembersTable.MemberActions.Modal");
+export default function InvitationActionsModal() {
+  const t = useTranslations(
+    "Components.MembersTable.InvitationActions.CancelModal",
+  );
 
-  const { open, setOpen, loading, selectedItem, selectedAction, startAction } =
-    useMemberActionsModalContext();
+  const { open, setOpen, loading, selectedItem, startAction } =
+    useInvitationActionsModalContext();
 
   const handleOnOpenChange = (open: boolean) => {
     if (loading) {
@@ -32,32 +31,10 @@ export default function MemberActionsModal() {
     setOpen(open);
   };
 
-  const getTitle = () => {
-    if (selectedAction === MemberAction.REMOVE) {
-      return t("removeTitle");
-    }
-    if (selectedAction === MemberAction.CHANGE_TO_ADMIN) {
-      return t("changeRoleTitle");
-    }
-    if (selectedAction === MemberAction.CHANGE_TO_MEMBER) {
-      return t("changeRoleTitle");
-    }
-    return "";
-  };
-
   const getDescription = () => {
     if (!selectedItem) return "";
-    const { name } = selectedItem.user;
-    if (selectedAction === MemberAction.REMOVE) {
-      return t("removeDescription", { member: name });
-    }
-    if (selectedAction === MemberAction.CHANGE_TO_ADMIN) {
-      return t("changeToAdminDescription", { member: name });
-    }
-    if (selectedAction === MemberAction.CHANGE_TO_MEMBER) {
-      return t("changeToMemberDescription", { member: name });
-    }
-    return "";
+    const { email } = selectedItem;
+    return t("description", { email });
   };
 
   return (
@@ -65,7 +42,7 @@ export default function MemberActionsModal() {
       <DialogContent className="w-[80vw] max-w-lg!">
         <DialogHeader>
           <DialogTitle className="text-center text-lg font-medium">
-            {getTitle()}
+            {t("title")}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-center text-base">
             {getDescription()}
