@@ -11,11 +11,17 @@ import {
   prisma,
   updateFiatTransactionServicePaymentId,
 } from "@/lib/db";
+import {
+  CouponCurrencyError,
+  CouponNotFoundError,
+  CouponTypeError,
+} from "@/lib/errors/coupon-errors";
 
 import {
   createCheckoutSession,
   createCustomer,
   getConversionFactors,
+  getCouponById,
   getOrCreatePromotionCode,
 } from "./third-party";
 
@@ -91,4 +97,33 @@ export async function getPromotionCode(
     maxRedemptions,
     metadata,
   );
+}
+
+export async function getCreditsForCoupon(
+  couponId: string,
+  priceId: string,
+): Promise<number> {
+  const coupon = await getCouponById(couponId);
+  if (!coupon) {
+    throw new CouponNotFoundError(couponId);
+  }
+  if (coupon.percent_off) {
+    throw new CouponTypeError("Only fixed-amount coupons are supported");
+  }
+  if (!coupon.amount_off) {
+    throw new CouponTypeError("Coupon must have a fixed amount");
+  }
+
+  const conversionFactors = await getConversionFactors(priceId);
+
+  if (
+    coupon.currency?.toLowerCase() !== conversionFactors.currency.toLowerCase()
+  ) {
+    throw new CouponCurrencyError(
+      coupon.currency ?? "unknown",
+      conversionFactors.currency,
+    );
+  }
+
+  return Math.ceil(coupon.amount_off / conversionFactors.amountPerCredit);
 }

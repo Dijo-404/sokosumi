@@ -719,6 +719,9 @@
       "topUpButton": "Top Up",
       "couponLabel": "Coupon Code",
       "couponPlaceholder": "Enter coupon code",
+      "couponOrCreditsError": "Please enter either a credit amount or a coupon code",
+      "couponCleared": "Coupon cleared - purchasing credits instead",
+      "creditsCleared": "Credits cleared - using coupon instead",
       "Error": {
         "title": "Something Went Wrong",
         "message": "We encountered an error loading the billing information.",
@@ -741,6 +744,9 @@
       },
       "invalidCredits": "Invalid credit amount",
       "invalidCoupon": "Invalid or inactive coupon code",
+      "couponNotFound": "Coupon code not found",
+      "couponTypeError": "This coupon type is not supported",
+      "couponCurrencyError": "Coupon currency is not supported",
       "checkoutFailed": "Failed to create checkout"
     },
     "Account": {
