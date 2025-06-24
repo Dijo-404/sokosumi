@@ -71,12 +71,14 @@ export async function startAgentJob(
     if (!startJobResponse.ok) {
       return Err("Failed to start job");
     }
-
-    const parsedResult = startJobResponseSchema.safeParse(
-      await startJobResponse.json(),
-    );
+    const responseJson = await startJobResponse.json();
+    const parsedResult = startJobResponseSchema.safeParse(responseJson);
     if (!parsedResult.success) {
-      return Err("Failed to parse start job response");
+      return Err(
+        `Failed to parse start job response: ${JSON.stringify(
+          parsedResult.error,
+        )}`,
+      );
     }
 
     return Ok(parsedResult.data);
@@ -158,7 +160,7 @@ export async function createPurchase(
         inputHash: inputHash,
         blockchainIdentifier: startJobResponse.blockchainIdentifier,
         network: getEnvPublicConfig().NEXT_PUBLIC_NETWORK,
-        sellerVkey: startJobResponse.sellerVkey,
+        sellerVkey: startJobResponse.sellerVKey,
         paymentType: "Web3CardanoV1",
         identifierFromPurchaser,
         payByTime: startJobResponse.payByTime.toString(),
