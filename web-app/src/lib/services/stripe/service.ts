@@ -20,9 +20,9 @@ import {
 import {
   createCheckoutSession,
   createCustomer,
-  getConversionFactors,
   getCouponById,
   getOrCreatePromotionCode,
+  Price,
 } from "./third-party";
 
 // Unified private helper for creating Stripe checkout sessions
@@ -30,7 +30,7 @@ export async function createStripeCheckoutSession(
   userId: string,
   organizationId: string | null,
   credits: number,
-  priceId: string,
+  price: Price,
   promotionCode: string | null = null,
 ): Promise<{ stripeSessionId: string; url: string }> {
   await verifyUserId(userId);
@@ -38,23 +38,20 @@ export async function createStripeCheckoutSession(
     try {
       const user = await retrieveUserById(userId, tx);
       if (!user) throw new Error("User not found");
-      const conversionFactorsPerCredit = await getConversionFactors(priceId);
-      const amount = credits * conversionFactorsPerCredit.amountPerCredit;
+      const amount = credits * price.amountPerCredit;
       const fiatTransaction = await createFiatTransaction(
         userId,
         organizationId,
         convertCreditsToCents(credits),
         amount,
-        conversionFactorsPerCredit.currency,
+        price.currency,
         tx,
       );
       const { id: stripeSessionId, url } = await createCheckoutSession(
         user,
-        fiatTransaction.id,
-        priceId,
-        Number(fiatTransaction.amount) /
-          conversionFactorsPerCredit.amountPerCredit,
-        promotionCode ?? null,
+        fiatTransaction,
+        price,
+        promotionCode,
       );
       await updateFiatTransactionServicePaymentId(
         fiatTransaction.id,
@@ -103,7 +100,7 @@ export async function getPromotionCode(
 
 export async function getCreditsForCoupon(
   couponId: string,
-  priceId: string,
+  price: Price,
 ): Promise<number> {
   const coupon = await getCouponById(couponId);
   if (!coupon) {
@@ -116,20 +113,17 @@ export async function getCreditsForCoupon(
     throw new CouponTypeError("Coupon must have a fixed amount");
   }
 
-  const conversionFactors = await getConversionFactors(priceId);
-
-  if (
-    coupon.currency?.toLowerCase() !== conversionFactors.currency.toLowerCase()
-  ) {
-    throw new CouponCurrencyError(
-      coupon.currency ?? "unknown",
-      conversionFactors.currency,
-    );
+  if (coupon.currency?.toLowerCase() !== price.currency.toLowerCase()) {
+    throw new CouponCurrencyError(coupon.currency ?? "unknown", price.currency);
   }
 
-  const credits = Math.floor(
-    coupon.amount_off / conversionFactors.amountPerCredit,
-  );
+  // Prevent division by zero for price.unit_amount
+  if (price.amountPerCredit === 0) {
+    throw new CouponTypeError(
+      "Price amountPerCredit is 0 – cannot calculate credits for free product",
+    );
+  }
+  const credits = Math.floor(coupon.amount_off / price.amountPerCredit);
   if (credits < 1) {
     throw new CouponTypeError("Coupon amount is too low");
   }

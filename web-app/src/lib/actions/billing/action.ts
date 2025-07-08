@@ -8,6 +8,8 @@ import {
   createStripeCheckoutSession,
   getCreditsForCoupon,
   getMyMemberInOrganization,
+  getPriceFromPriceId,
+  getPriceFromProductId,
   getPromotionCode,
   getWelcomePromotionCode,
 } from "@/lib/services";
@@ -33,12 +35,16 @@ export async function claimFreeCredits(): Promise<
       });
     }
 
+    const price = await getPriceFromProductId(
+      getEnvSecrets().STRIPE_PRODUCT_ID,
+    );
+
     // Create the checkout session
     const { url } = await createStripeCheckoutSession(
       session.user.id,
       null,
       100,
-      getEnvSecrets().STRIPE_PRICE_ID,
+      price,
       promotionCode.id,
     );
 
@@ -85,12 +91,15 @@ export async function purchaseCredits(
       }
     }
 
+    // Fetch price server-side
+    const price = await getPriceFromPriceId(priceId);
+
     // Create the checkout session
     const { url } = await createStripeCheckoutSession(
       session.user.id,
       organizationId,
       credits,
-      priceId,
+      price,
     );
 
     return Ok({ url });
@@ -128,7 +137,9 @@ export async function getFreeCreditsWithCoupon(
       }
     }
 
-    const credits = await getCreditsForCoupon(couponId, priceId);
+    // Fetch price server-side
+    const price = await getPriceFromPriceId(priceId);
+    const credits = await getCreditsForCoupon(couponId, price);
 
     // Validate and get the promotion code for this user and couponId
     const promo = await getPromotionCode(session.user.id, couponId, 1);
@@ -144,7 +155,7 @@ export async function getFreeCreditsWithCoupon(
       session.user.id,
       organizationId ?? null,
       credits,
-      priceId,
+      price,
       promo.id,
     );
     return Ok({ url });
