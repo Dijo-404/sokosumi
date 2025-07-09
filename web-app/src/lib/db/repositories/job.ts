@@ -177,7 +177,7 @@ interface CreateJobData {
   organizationId: string | null | undefined;
   inputSchema: JobInputSchemaType[];
   input: string;
-  paymentId: string;
+  purchaseId?: string;
   creditsPrice: CreditsPrice;
   identifierFromPurchaser: string;
   payByTime: Date;
@@ -186,6 +186,7 @@ interface CreateJobData {
   unlockTime: Date;
   blockchainIdentifier: string;
   sellerVkey: string;
+  name: string | null;
 }
 
 export async function createJob(
@@ -233,7 +234,9 @@ export async function createJob(
       creditTransaction: {
         create: creditTransactionData,
       },
-      paymentId: data.paymentId,
+      ...(data.purchaseId && {
+        purchaseId: data.purchaseId,
+      }),
       inputSchema: data.inputSchema,
       input: data.input,
       identifierFromPurchaser: data.identifierFromPurchaser,
@@ -243,6 +246,7 @@ export async function createJob(
       unlockTime: data.unlockTime,
       blockchainIdentifier: data.blockchainIdentifier,
       sellerVkey: data.sellerVkey,
+      name: data.name,
     },
   });
 }
@@ -323,6 +327,7 @@ export async function updateJobWithPurchase(
 ) {
   const onChainStatus = onChainStateToOnChainJobStatus(purchase.onChainState);
   let data: Prisma.JobUpdateInput = {
+    purchaseId: purchase.id,
     onChainStatus,
     inputHash: purchase.inputHash,
     outputHash: purchase.resultHash,
