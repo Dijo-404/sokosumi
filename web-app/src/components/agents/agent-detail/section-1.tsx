@@ -9,7 +9,6 @@ import { AgentHireButton } from "@/components/agents/agent-hire-button";
 import { AgentVerifiedBadge } from "@/components/agents/agent-verified-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  AgentListWithAgent,
   AgentWithRelations,
   convertCentsToCredits,
   CreditsPrice,
@@ -20,7 +19,7 @@ import {
 
 interface AgentDetailSection1Props {
   agent: AgentWithRelations;
-  agentList: AgentListWithAgent | undefined;
+  favoriteAgents: AgentWithRelations[] | undefined;
   agentCreditsPrice: CreditsPrice;
   showBackButton?: boolean | undefined;
   showCloseButton?: boolean | undefined;
@@ -29,7 +28,7 @@ interface AgentDetailSection1Props {
 
 function AgentDetailSection1({
   agent,
-  agentList,
+  favoriteAgents,
   agentCreditsPrice,
   showBackButton,
   showCloseButton,
@@ -41,7 +40,7 @@ function AgentDetailSection1({
     <div className="flex flex-col gap-6">
       <AgentActionButtons
         agent={agent}
-        agentList={agentList}
+        favoriteAgents={favoriteAgents}
         showBackButton={showBackButton}
         showCloseButton={showCloseButton}
         onClose={onClose}

@@ -2,8 +2,11 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { CreateJobModalTrigger } from "@/components/create-job-modal";
-import { retrieveAgentWithRelationsById } from "@/lib/db/repositories";
-import { getMyJobsByAgentId } from "@/lib/services";
+import {
+  getAgentById,
+  getAvailableAgentById,
+  getMyJobsByAgentId,
+} from "@/lib/services";
 
 import JobDetailRedirect from "./components/job-detail-redirect";
 
@@ -20,13 +23,13 @@ export default async function RightSectionPage({
 
   const { agentId } = await params;
 
-  const agent = await retrieveAgentWithRelationsById(agentId);
+  const agent = await getAgentById(agentId);
   if (!agent) {
-    console.warn("agent not found in right page");
     notFound();
   }
 
   const agentJobs = await getMyJobsByAgentId(agentId);
+  const availableAgent = await getAvailableAgentById(agentId);
 
   if (agentJobs.length > 0) {
     return <JobDetailRedirect agentId={agentId} jobId={agentJobs[0].id} />;
@@ -36,7 +39,7 @@ export default async function RightSectionPage({
     <div className="bg-muted/50 flex h-full w-full flex-1 items-center justify-center rounded-xl border-none">
       <div className="flex flex-col gap-4">
         <p>{t("noExecutedJobs")}</p>
-        <CreateJobModalTrigger agentId={agentId} />
+        <CreateJobModalTrigger agentId={agentId} disabled={!availableAgent} />
       </div>
     </div>
   );

@@ -8,13 +8,12 @@ import {
 } from "@/components/create-job-modal";
 import DefaultLoading from "@/components/default-loading";
 import { getAgentDescription, getAgentLegal, getAgentName } from "@/lib/db";
+import { retrieveJobsWithLimitedInformationByAgentId } from "@/lib/db/repositories";
 import {
-  retrieveAgentWithRelationsById,
-  retrieveJobsWithLimitedInformationByAgentId,
-} from "@/lib/db/repositories";
-import {
+  getAgentById,
   getAgentCreditsPrice,
-  getOrCreateFavoriteAgentList,
+  getAvailableAgentById,
+  getFavoriteAgents,
 } from "@/lib/services";
 
 import Footer from "./components/footer";
@@ -26,7 +25,7 @@ export async function generateMetadata({
   params: Promise<{ agentId: string }>;
 }): Promise<Metadata> {
   const { agentId } = await params;
-  const agent = await retrieveAgentWithRelationsById(agentId);
+  const agent = await getAgentById(agentId);
   if (!agent) {
     notFound();
   }
@@ -59,15 +58,15 @@ export default async function JobLayout({
 
 async function JobLayoutInner({ right, params, children }: JobLayoutProps) {
   const { agentId } = await params;
-  const agent = await retrieveAgentWithRelationsById(agentId);
+  const agent = await getAgentById(agentId);
   if (!agent) {
-    console.warn("agent not found in job layout");
     return notFound();
   }
 
   const agentCreditsPrice = await getAgentCreditsPrice(agent);
-  const favoriteAgentList = await getOrCreateFavoriteAgentList();
+  const favoriteAgents = await getFavoriteAgents();
   const jobs = await retrieveJobsWithLimitedInformationByAgentId(agentId);
+  const availableAgent = await getAvailableAgentById(agentId);
 
   return (
     <CreateJobModalContextProvider
@@ -77,8 +76,9 @@ async function JobLayoutInner({ right, params, children }: JobLayoutProps) {
         <Header
           agent={agent}
           agentCreditsPrice={agentCreditsPrice}
-          favoriteAgentList={favoriteAgentList}
+          favoriteAgents={favoriteAgents}
           jobs={jobs}
+          disabled={!availableAgent}
         />
         <div className="mt-6 flex flex-1 flex-col justify-center gap-4 lg:flex-row lg:overflow-hidden">
           {children}
@@ -86,7 +86,7 @@ async function JobLayoutInner({ right, params, children }: JobLayoutProps) {
         </div>
         <Footer legal={getAgentLegal(agent)} />
         {/* Create Job Modal */}
-        <CreateJobModal />
+        {!!availableAgent && <CreateJobModal />}
       </div>
     </CreateJobModalContextProvider>
   );

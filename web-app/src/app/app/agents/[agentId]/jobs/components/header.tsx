@@ -13,7 +13,6 @@ import { CreateJobModalTrigger } from "@/components/create-job-modal";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  AgentListWithAgent,
   AgentWithRelations,
   convertCentsToCredits,
   CreditsPrice,
@@ -49,18 +48,23 @@ export function HeaderSkeleton() {
 interface HeaderProps {
   agent: AgentWithRelations;
   agentCreditsPrice: CreditsPrice;
-  favoriteAgentList: AgentListWithAgent;
+  favoriteAgents: AgentWithRelations[];
   jobs: JobWithLimitedInformation[];
+  disabled?: boolean;
 }
 
 export default function Header({
   agent,
+  disabled,
   agentCreditsPrice,
-  favoriteAgentList,
+  favoriteAgents,
   jobs,
 }: HeaderProps) {
   const t = useTranslations("App.Agents.Jobs.Header");
   const [detailOpen, setDetailOpen] = useState(false);
+  const isFavorite = favoriteAgents.some(
+    (favoriteAgent) => favoriteAgent.id === agent.id,
+  );
 
   const handleDetailsClick = () => {
     setDetailOpen(true);
@@ -79,11 +83,16 @@ export default function Header({
         <Button
           className="text-sm leading-tight font-medium"
           variant="ghost"
+          disabled={disabled}
           onClick={handleDetailsClick}
         >
           {t("details")}
         </Button>
-        <AgentBookmarkButton agentId={agent.id} agentList={favoriteAgentList} />
+        <AgentBookmarkButton
+          agentId={agent.id}
+          isFavorite={isFavorite}
+          disabled={disabled}
+        />
       </div>
       <div className="flex flex-1 flex-row items-center justify-end gap-4">
         <div className="w-full text-end text-sm font-semibold">
@@ -91,14 +100,14 @@ export default function Header({
             price: convertCentsToCredits(agentCreditsPrice.cents),
           })}
         </div>
-        <CreateJobModalTrigger agentId={agent.id} />
+        <CreateJobModalTrigger agentId={agent.id} disabled={disabled} />
       </div>
       {/* Agent Modal */}
       <AgentModal open={detailOpen}>
         <AgentDetail
           agent={agent}
           agentCreditsPrice={agentCreditsPrice}
-          agentList={favoriteAgentList}
+          favoriteAgents={favoriteAgents}
           jobs={jobs}
           showBackButton={false}
           showCloseButton

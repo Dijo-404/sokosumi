@@ -11,11 +11,13 @@ import { useCreateJobModalContext } from "./create-job-modal-context";
 interface CreateJobModalTriggerProps {
   agentId: string;
   className?: string | undefined;
+  disabled?: boolean;
 }
 
 export default function CreateJobModalTrigger({
   agentId,
   className,
+  disabled,
 }: CreateJobModalTriggerProps) {
   const t = useTranslations("App.Agents.Jobs");
   const { handleOpen } = useCreateJobModalContext();
@@ -29,6 +31,7 @@ export default function CreateJobModalTrigger({
       variant="primary"
       className={cn("gap-2", className)}
       onClick={handleClick}
+      disabled={disabled}
     >
       <Plus />
       {t("newJob")}
