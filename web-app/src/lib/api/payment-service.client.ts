@@ -1,6 +1,5 @@
-import { createClient } from "@hey-api/client-next";
-
 import { getEnvSecrets } from "@/config/env.secrets";
+import { createClient } from "@/lib/api/generated/payment/client";
 
 export const getPaymentClient = () => {
   const paymentClient = createClient({

@@ -1,6 +1,5 @@
-import { createClient } from "@hey-api/client-next";
-
 import { getEnvSecrets } from "@/config/env.secrets";
+import { createClient } from "@/lib/api/generated/registry/client";
 
 export const getRegistryClient = () => {
   const registryClient = createClient({
