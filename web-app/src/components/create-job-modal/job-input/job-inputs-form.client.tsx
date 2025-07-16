@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Command, CornerDownLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -11,7 +12,6 @@ import { toast } from "sonner";
 import { useCreateJobModalContext } from "@/components/create-job-modal";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { useAsyncRouter } from "@/hooks/use-async-router";
 import usePreventEnterSubmit from "@/hooks/use-prevent-enter-submit";
 import {
   CommonErrorCode,
@@ -61,12 +61,12 @@ export default function JobInputsFormClient({
     defaultValues: defaultValues(input_data),
     mode: "onChange",
   });
-  const asyncRouter = useAsyncRouter();
+  const router = useRouter();
 
   const { os, isMobile } = getOSFromUserAgent();
 
   // create job modal context
-  const { open, setLoading, handleClose } = useCreateJobModalContext();
+  const { open, loading, setLoading } = useCreateJobModalContext();
 
   // Then replace your existing handleSubmit function with this:
   const handleSubmit: SubmitHandler<JobInputsFormSchemaType> = async (
@@ -84,20 +84,14 @@ export default function JobInputsFormClient({
     });
 
     if (result.ok) {
-      form.reset();
-      handleClose();
-      await asyncRouter.push(
-        `/app/agents/${agentId}/jobs/${result.data.jobId}`,
-      );
+      router.push(`/app/agents/${agentId}/jobs/${result.data.jobId}`);
     } else {
       switch (result.error.code) {
         case CommonErrorCode.UNAUTHENTICATED:
           toast.error(t("Error.unauthenticated"), {
             action: {
               label: t("Error.unauthenticatedAction"),
-              onClick: async () => {
-                await asyncRouter.push(`/login`);
-              },
+              onClick: () => router.push(`/login`),
             },
           });
           break;
@@ -108,9 +102,7 @@ export default function JobInputsFormClient({
           toast.error(t("Error.insufficientBalance"), {
             action: {
               label: t("Error.insufficientBalanceAction"),
-              onClick: async () => {
-                await asyncRouter.push(`/app/billing`);
-              },
+              onClick: () => router.push(`/app/billing`),
             },
           });
           break;
@@ -118,8 +110,8 @@ export default function JobInputsFormClient({
           toast.error(t("Error.default"));
           break;
       }
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const { formRef, handleSubmit: enterPreventedHandleSubmit } =
@@ -137,7 +129,7 @@ export default function JobInputsFormClient({
         className="plausible-event-name=Hire"
       >
         <fieldset
-          disabled={form.formState.isSubmitting}
+          disabled={loading || form.formState.isSubmitting}
           className={cn("flex flex-1 flex-col gap-6", className)}
         >
           {input_data.map((jobInputSchema) => (
@@ -162,12 +154,14 @@ export default function JobInputsFormClient({
                 <Button
                   type="submit"
                   disabled={
-                    form.formState.isSubmitting || !form.formState.isValid
+                    loading ||
+                    form.formState.isSubmitting ||
+                    !form.formState.isValid
                   }
                   className="items-center justify-between gap-2"
                 >
                   <div className="flex items-center gap-1">
-                    {form.formState.isSubmitting && (
+                    {(loading || form.formState.isSubmitting) && (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     )}
                     {t("submit")}
