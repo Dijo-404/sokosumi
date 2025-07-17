@@ -25,10 +25,21 @@ async function createLockByKey(
   });
 }
 
+/**
+ * Releases a distributed lock identified by the given key.
+ *
+ * This function atomically unlocks a lock only if it is currently locked.
+ * It uses updateMany to ensure the operation is atomic and prevents race conditions.
+ *
+ * @param key - The unique identifier for the lock to release
+ * @param tx - Optional Prisma transaction client. Defaults to the global prisma instance
+ * @returns Promise<boolean> - Returns true if the lock was successfully unlocked, false if the lock was not locked
+ *
+ */
 export async function unlockLock(
   key: string,
   tx: Prisma.TransactionClient = prisma,
-): Promise<Lock | null> {
+): Promise<boolean> {
   // Atomically unlock only if currently locked
   const result = await tx.lock.updateMany({
     where: {
@@ -42,11 +53,11 @@ export async function unlockLock(
     },
   });
   if (result.count === 1) {
-    // Successfully unlocked, return the updated lock
-    return await tx.lock.findFirst({ where: { key } });
+    // Successfully unlocked
+    return true;
   }
   // Failed to unlock (was not locked)
-  return null;
+  return false;
 }
 
 export async function acquireLock(
