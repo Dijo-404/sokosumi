@@ -66,7 +66,7 @@ export default function JobInputsFormClient({
   const { os, isMobile } = getOSFromUserAgent();
 
   // create job modal context
-  const { open, loading, setLoading } = useCreateJobModalContext();
+  const { open, loading, setLoading, handleClose } = useCreateJobModalContext();
 
   // Then replace your existing handleSubmit function with this:
   const handleSubmit: SubmitHandler<JobInputsFormSchemaType> = async (
@@ -83,7 +83,9 @@ export default function JobInputsFormClient({
       inputData: transformedInputData,
     });
 
+    setLoading(false);
     if (result.ok) {
+      handleClose();
       await router.push(`/app/agents/${agentId}/jobs/${result.data.jobId}`);
     } else {
       switch (result.error.code) {
@@ -110,7 +112,6 @@ export default function JobInputsFormClient({
           toast.error(t("Error.default"));
           break;
       }
-      setLoading(false);
     }
   };
 
