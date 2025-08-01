@@ -9,24 +9,17 @@ import {
 import DefaultLoading from "@/components/default-loading";
 import { getSessionOrRedirect } from "@/lib/auth/utils";
 import { getAgentDescription, getAgentLegal, getAgentName } from "@/lib/db";
-import { jobRepository } from "@/lib/db/repositories";
-import {
-  getAgentById,
-  getAgentCreditsPrice,
-  getAvailableAgentById,
-  getFavoriteAgents,
-} from "@/lib/services";
+import { agentRepository, jobRepository } from "@/lib/db/repositories";
+import { agentService, getAgentCreditsPrice } from "@/lib/services";
 
 import Footer from "./components/footer";
 import Header, { HeaderSkeleton } from "./components/header";
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ agentId: string }>;
-}): Promise<Metadata> {
+}: JobLayoutProps): Promise<Metadata> {
   const { agentId } = await params;
-  const agent = await getAgentById(agentId);
+  const agent = await agentRepository.getAgentWithRelationsById(agentId);
   if (!agent) {
     notFound();
   }
@@ -61,18 +54,18 @@ export default async function JobLayout({
 
 async function JobLayoutInner({ right, params, children }: JobLayoutProps) {
   const { agentId } = await params;
-  const agent = await getAgentById(agentId);
+  const agent = await agentRepository.getAgentWithRelationsById(agentId);
   if (!agent) {
     return notFound();
   }
 
   const agentCreditsPrice = await getAgentCreditsPrice(agent);
-  const favoriteAgents = await getFavoriteAgents();
+  const favoriteAgents = await agentService.getFavoriteAgents();
   const [executedJobsCount, averageExecutionDuration] = await Promise.all([
     jobRepository.getExecutedJobsCountByAgentId(agentId),
     jobRepository.getAverageExecutionDurationByAgentId(agentId),
   ]);
-  const availableAgent = await getAvailableAgentById(agentId);
+  const availableAgent = await agentService.getAvailableAgentById(agentId);
 
   return (
     <CreateJobModalContextProvider

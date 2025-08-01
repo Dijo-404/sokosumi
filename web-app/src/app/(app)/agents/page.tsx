@@ -4,10 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { AgentsNotAvailable } from "@/components/agents";
 import { getSessionOrRedirect } from "@/lib/auth/utils";
 import { tagRepository } from "@/lib/db/repositories";
-import {
-  getAvailableAgentsWithCreditsPrice,
-  getFavoriteAgents,
-} from "@/lib/services";
+import { agentService } from "@/lib/services";
 import { Tag } from "@/prisma/generated/client";
 
 import FilterSection from "./components/filter-section";
@@ -25,7 +22,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function GalleryPage() {
   await getSessionOrRedirect();
 
-  const agentsWithPrice = await getAvailableAgentsWithCreditsPrice();
+  const agentsWithPrice =
+    await agentService.getAvailableAgentsWithCreditsPrice();
 
   if (!agentsWithPrice.length) {
     return <AgentsNotAvailable />;
@@ -34,7 +32,7 @@ export default async function GalleryPage() {
   const tags: Tag[] = await tagRepository.getTags();
   const tagNames = tags.map((tag) => tag.name);
 
-  const favoriteAgents = await getFavoriteAgents();
+  const favoriteAgents = await agentService.getFavoriteAgents();
 
   return (
     <div className="w-full">
