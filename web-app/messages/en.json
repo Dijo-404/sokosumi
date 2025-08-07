@@ -1010,7 +1010,7 @@
           "Output": {
             "title": "Output",
             "failedToParseOutput": "Failed to parse output",
-            "none": "No result data",
+            "none": "No output available",
             "download": "Download",
             "copy": "Copy",
             "copySuccess": "Output copied to clipboard",
@@ -1036,6 +1036,10 @@
                 "unavailable": {
                   "title": "Refund no longer available",
                   "description": "You could have requested a refund until {unlockAt}."
+                },
+                "failed": {
+                  "title": "Automatic refund pending",
+                  "description": "An automatic refund will be processed at {unlockAt}"
                 }
               },
               "Errors": {
