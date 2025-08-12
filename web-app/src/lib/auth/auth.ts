@@ -148,6 +148,11 @@ export const auth = betterAuth({
         type: "boolean",
         required: false,
       },
+      stripeCustomerId: {
+        type: "string",
+        required: false,
+        defaultValue: null,
+      },
     },
   },
   rateLimit: {
@@ -162,6 +167,18 @@ export const auth = betterAuth({
       },
     }),
     organization({
+      schema: {
+        organization: {
+          additionalFields: {
+            stripeCustomerId: {
+              type: "string",
+              required: false,
+              defaultValue: null,
+              input: false,
+            },
+          },
+        },
+      },
       async sendInvitationEmail(data) {
         const inviteLink = `${getEnvSecrets().BETTER_AUTH_URL}/accept-invitation/${data.id}`;
         const t = await getTranslations("Library.Auth.Email.InviteUserEmail");
