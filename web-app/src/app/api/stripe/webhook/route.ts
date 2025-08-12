@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 import { stripeClient } from "@/lib/clients/stripe.client";
-import { fiatTransactionRepository, prisma } from "@/lib/db/repositories";
+import {
+  fiatTransactionRepository,
+  organizationRepository,
+  prisma,
+} from "@/lib/db/repositories";
 import { FiatTransactionStatus } from "@/prisma/generated/client";
 
 export async function POST(req: Request) {
@@ -26,6 +30,7 @@ export async function POST(req: Request) {
     "checkout.session.expired",
     "checkout.session.async_payment_succeeded",
     "checkout.session.async_payment_failed",
+    "customer.updated",
   ];
 
   console.log(`🔍 Event id: ${event.id}`);
@@ -48,6 +53,10 @@ export async function POST(req: Request) {
         case "checkout.session.async_payment_failed": {
           const session = event.data.object as Stripe.Checkout.Session;
           return await handleCheckoutSessionAsyncPaymentFailedEvent(session);
+        }
+        case "customer.updated": {
+          const customer = event.data.object as Stripe.Customer;
+          return await handleCustomerUpdatedEvent(customer);
         }
         default:
           return NextResponse.json(
@@ -197,4 +206,60 @@ const updateFiatTransactionStatus = async (
       throw error;
     }
   });
+};
+
+const handleCustomerUpdatedEvent = async (
+  customer: Stripe.Customer,
+): Promise<NextResponse> => {
+  try {
+    // Check if this is an organization customer
+    const metadata = customer.metadata;
+    if (metadata?.type === "organization" && metadata?.organizationId) {
+      const organizationId = metadata.organizationId;
+      const customerEmail =
+        typeof customer.email === "string" ? customer.email : null;
+
+      // Get the current organization to compare emails
+      const organization =
+        await organizationRepository.getOrganizationWithRelationsById(
+          organizationId,
+        );
+
+      if (!organization) {
+        console.log(
+          `Organization ${organizationId} not found for customer ${customer.id}`,
+        );
+        return NextResponse.json(
+          { message: `Organization not found` },
+          { status: 200 },
+        );
+      }
+
+      // Only update if the email has actually changed
+      if (organization.invoiceEmail !== customerEmail) {
+        await organizationRepository.updateOrganizationInvoiceEmail(
+          organizationId,
+          customerEmail,
+        );
+        console.log(
+          `✅ Updated organization ${organizationId} invoice email from ${organization.invoiceEmail} to ${customerEmail}`,
+        );
+      }
+    } else if (metadata?.type === "user" && metadata?.userId) {
+      // For user customers, we could update the user email if needed
+      // Currently, user emails are managed through the auth system
+      console.log(`User customer ${customer.id} updated, no action taken`);
+    }
+
+    return NextResponse.json(
+      { message: "Customer update processed" },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("Error handling customer.updated event", error);
+    return NextResponse.json(
+      { message: "Failed to process customer update" },
+      { status: 500 },
+    );
+  }
 };

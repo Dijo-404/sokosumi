@@ -36,9 +36,9 @@ export const stripeClient = (() => {
   return {
     async createUserCustomer(user: User): Promise<Stripe.Customer> {
       const customer = await stripe.customers.create({
-        email: user.email,
         name: user.name,
-        metadata: { userId: user.id },
+        email: user.email,
+        metadata: { userId: user.id, type: "user" },
       });
       return customer;
     },
@@ -48,27 +48,27 @@ export const stripeClient = (() => {
     ): Promise<Stripe.Customer> {
       const customer = await stripe.customers.create({
         name: organization.name,
+        ...(organization.invoiceEmail && { email: organization.invoiceEmail }),
         metadata: {
           organizationId: organization.id,
           organizationSlug: organization.slug,
+          type: "organization",
         },
       });
       return customer;
     },
 
-    async deleteCustomer(customerId: string): Promise<void> {
-      await stripe.customers.del(customerId);
+    async updateCustomerEmail(
+      customerId: string,
+      email: string | null,
+    ): Promise<Stripe.Customer> {
+      return await stripe.customers.update(customerId, {
+        email: email ?? undefined,
+      });
     },
 
-    async getCustomersByEmail(
-      email: string,
-      limit?: number,
-    ): Promise<Stripe.Customer[]> {
-      const customers = await stripe.customers.list({
-        email: email,
-        limit: limit,
-      });
-      return customers.data;
+    async deleteCustomer(customerId: string): Promise<void> {
+      await stripe.customers.del(customerId);
     },
 
     async getPromotionCode(
