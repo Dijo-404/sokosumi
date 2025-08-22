@@ -13,6 +13,7 @@ import {
   claimFreeCredits,
   CommonErrorCode,
 } from "@/lib/actions";
+import { fireGTMEvent } from "@/lib/gtm-events";
 
 interface FreeCreditsButtonProps {
   promotionCode: string;
@@ -31,6 +32,7 @@ export default function FreeCreditsButton({
     const result = await claimFreeCredits(promotionCode);
 
     if (result.ok) {
+      fireGTMEvent.freeCreditStartCheckout();
       window.location.href = result.data.url;
     } else {
       switch (result.error.code) {

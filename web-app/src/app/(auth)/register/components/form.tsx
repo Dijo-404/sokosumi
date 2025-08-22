@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { usePlausible } from "next-plausible";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -12,6 +12,7 @@ import { AuthForm, SubmitButton } from "@/auth/components/form";
 import { signUpFormData } from "@/auth/register/data";
 import { AuthErrorCode, signUpEmail } from "@/lib/actions";
 import { FormData } from "@/lib/form";
+import { fireGTMEvent } from "@/lib/gtm-events";
 import { signUpFormSchema, SignUpFormSchemaType } from "@/lib/schemas";
 
 interface SignUpFormProps {
@@ -21,9 +22,9 @@ interface SignUpFormProps {
 
 export default function SignUpForm({ prefilledEmail }: SignUpFormProps) {
   const t = useTranslations("Auth.Pages.SignUp.Form");
+  const registerFormStart = useRef(false);
 
   const router = useRouter();
-  const plausible = usePlausible();
   const form = useForm<SignUpFormSchemaType>({
     resolver: zodResolver(
       signUpFormSchema(useTranslations("Library.Auth.Schema")),
@@ -38,6 +39,20 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps) {
     },
   });
 
+  // when user first sees the register page
+  useEffect(() => {
+    fireGTMEvent.viewRegisterArea();
+  }, []);
+
+  // when user starts typing in the form
+  useEffect(() => {
+    if (registerFormStart.current) return;
+    if (form.formState.isDirty) {
+      registerFormStart.current = true;
+      fireGTMEvent.registerFormStart();
+    }
+  }, [form.formState.isDirty]);
+
   const handleSubmit = async (values: SignUpFormSchemaType) => {
     const result = await signUpEmail({
       email: values.email,
@@ -49,7 +64,8 @@ export default function SignUpForm({ prefilledEmail }: SignUpFormProps) {
     });
 
     if (result.ok) {
-      plausible("Signup");
+      // when user creates a new account
+      fireGTMEvent.signUp();
       toast.success(t("success"));
       router.push("/login");
     } else {
