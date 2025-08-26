@@ -398,8 +398,8 @@ function AgentCard({
                     src={authorImage}
                     alt={`${getAgentName(agent)} author image`}
                     width={400}
-                    height={400}
-                    className="h-1/4 w-auto"
+                    height={100}
+                    className="h-8 w-auto object-contain"
                   />
                 ) : (
                   <Badge variant="default" className="max-w-full">
