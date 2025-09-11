@@ -87,8 +87,8 @@ importers:
   web-app:
     dependencies:
       '@anthropic-ai/sdk':
-        specifier: 0.61.0
-        version: 0.61.0
+        specifier: 0.62.0
+        version: 0.62.0
       '@better-auth/utils':
         specifier: 0.2.6
         version: 0.2.6
@@ -319,8 +319,8 @@ packages:
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
 
-  '@anthropic-ai/sdk@0.61.0':
-    resolution: {integrity: sha512-GnlOXrPxow0uoaVB3DGNh9EJBU1MyagCBCLpU+bwDVlj/oOPYIwoiasMWlykkfYcQOrDP2x/zHnRD0xN7PeZPw==}
+  '@anthropic-ai/sdk@0.62.0':
+    resolution: {integrity: sha512-gT2VFKX0gSp7KJNlav/vzRFjJOPYDZxCJRx7MYUc+fqURc5aS6OI/UJeD2KytJkjsIWv0OOwH1ePc1S5QE2GZw==}
     hasBin: true
 
   '@asamuzakjp/css-color@3.2.0':
@@ -6558,7 +6558,7 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
-  '@anthropic-ai/sdk@0.61.0': {}
+  '@anthropic-ai/sdk@0.62.0': {}
 
   '@asamuzakjp/css-color@3.2.0':
     dependencies:
