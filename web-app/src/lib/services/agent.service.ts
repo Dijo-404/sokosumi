@@ -1,16 +1,19 @@
 import "server-only";
 
+import { Decimal } from "decimal.js";
+
 import { getEnvPublicConfig } from "@/config/env.public";
 import { getEnvSecrets } from "@/config/env.secrets";
 import { getAuthContext } from "@/lib/auth/utils";
 import {
   AgentWithCreditsPrice,
-  AgentWithFixedPricing,
   AgentWithJobs,
   AgentWithOrganizations,
+  AgentWithPricing,
   AgentWithRelations,
   convertCentsToCredits,
   convertCreditsToCents,
+  getAgentPricingAmounts,
 } from "@/lib/db";
 import {
   agentListRepository,
@@ -26,6 +29,7 @@ import {
   AgentListType,
   AgentStatus,
   CreditCost,
+  PricingType,
   Prisma,
 } from "@/prisma/generated/client";
 
@@ -50,25 +54,40 @@ export const agentService = (() => {
   }
 
   /**
-   * Utility: Checks if an agent's fixed pricing units are all valid according to the provided credit costs.
+   * Utility: Checks if an agent's pricing unit values are all valid according to the provided credit costs.
    *
-   * @param agent - Agent with fixed pricing information.
+   * @param agent - Agent with pricing information.
    * @param creditCosts - Array of valid credit cost objects.
    * @returns True if all pricing units are valid or if there are no amounts, false otherwise.
    */
   function hasValidPricing(
-    agent: AgentWithFixedPricing,
+    agent: AgentWithPricing,
     creditCosts: CreditCost[],
   ): boolean {
-    const units = creditCosts.map(({ unit }) => unit);
-    const amounts = agent.pricing.fixedPricing?.amounts?.map((amount) => ({
-      unit: amount.unit,
-      amount: Number(amount.amount),
-    }));
-    if (!amounts) {
-      return true;
+    switch (agent.pricing.pricingType) {
+      case PricingType.FIXED: {
+        const units = creditCosts.map(({ unit }) => unit);
+        const amounts = agent.pricing.fixedPricing?.amounts?.map((amount) => ({
+          unit: amount.unit,
+          amount: amount.amount,
+        }));
+        if (!amounts) {
+          // There must be fixedPricing for FIXED pricing type
+          return false;
+        }
+
+        const areAmountsValid = amounts.every(
+          ({ unit, amount }) => units.includes(unit) && amount > 0,
+        );
+        return areAmountsValid;
+      }
+      case PricingType.FREE: {
+        return true;
+      }
+      case PricingType.UNKNOWN: {
+        return false;
+      }
     }
-    return amounts.every(({ unit }) => units.includes(unit));
   }
 
   /**
@@ -317,22 +336,25 @@ export const agentService = (() => {
      * @param agent - The agent with pricing and relations data.
      * @param tx - Optional Prisma transaction client for DB operations (defaults to main Prisma client).
      * @returns The agent object with an added `creditsPrice` property.
-     * @throws If the fee percentage is negative or if a credit cost for a unit is not found.
+     * @throws If the fee percentage is negative or if a credit cost for a unit is not found or if the agent has invalid or unknown pricing.
      */
     getAgentCreditsPrice: async (
       agent: AgentWithRelations,
       tx: Prisma.TransactionClient = prisma,
     ): Promise<AgentWithCreditsPrice> => {
-      const amounts = agent.pricing?.fixedPricing?.amounts?.map((amount) => ({
-        unit: amount.unit,
-        amount: Number(amount.amount),
-      }));
+      const amounts = getAgentPricingAmounts(agent);
       if (!amounts) {
+        throw new Error("Agent has invalid or unknown pricing");
+      }
+
+      // if amounts is empty (in case of free agent)
+      if (amounts.length === 0) {
         return {
           ...agent,
           creditsPrice: { cents: BigInt(0), includedFee: BigInt(0) },
         };
       }
+
       const feePercentagePoints =
         getEnvPublicConfig().NEXT_PUBLIC_FEE_PERCENTAGE;
       if (feePercentagePoints < 0) {
@@ -356,12 +378,17 @@ export const agentService = (() => {
         if (!creditCost) {
           throw new Error(`Credit cost not found for unit ${amount.unit}`);
         }
-        const cents = amount.amount * Number(creditCost.centsPerUnit);
-        const fee = cents * feeMultiplier;
+        const cents = amount.amount * creditCost.centsPerUnit;
+        const fee = BigInt(
+          new Decimal(cents.toString())
+            .mul(feeMultiplier) // feeMultiplier = feePercentagePoints / 100
+            .ceil()
+            .toFixed(0),
+        );
 
         // round up to the nearest integer
-        totalCents += BigInt(Math.ceil(cents));
-        totalFee += BigInt(Math.ceil(fee));
+        totalCents += cents;
+        totalFee += fee;
       }
       if (totalFee < minFeeCents) {
         totalFee = minFeeCents;
