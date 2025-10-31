@@ -1,7 +1,12 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Packages 
+packages/*/dist
+packages/*/node_modules
+*.tsbuildinfo
+
 # dependencies
-/node_modules
+node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -23,7 +28,5 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# reports
 lint-report.json
-
-# builds
-**/packages
