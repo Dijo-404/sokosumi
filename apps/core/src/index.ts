@@ -9,7 +9,12 @@ import type { RequestIdVariables } from "hono/request-id";
 import { requestId } from "hono/request-id";
 
 import { notFound } from "@/helpers/error";
+import { errorHandler } from "@/helpers/error-handler";
+import { initSentry } from "@/lib/sentry";
+import { sentryMiddleware } from "@/middleware/sentry";
 import apiV1 from "@/routes/v1/index";
+
+initSentry();
 
 const app = new OpenAPIHono<{ Variables: RequestIdVariables }>();
 
@@ -19,8 +24,11 @@ app.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
   bearerFormat: "JWT",
 });
 
+app.onError(errorHandler);
+
 app.use(logger());
 app.use(requestId());
+app.use(sentryMiddleware());
 app.use(
   "*",
   cors({
@@ -37,10 +45,8 @@ app.notFound(() => {
   throw notFound();
 });
 
-// Mount API v1 routes
 app.route("/v1", apiV1);
 
-// Generate OpenAPI spec from the API routes (publicly accessible)
 app.doc("/openapi.json", {
   openapi: "3.0.3",
   info: {
