@@ -5,7 +5,6 @@ import {
   AgentJobStatus,
   AgentWithRelations,
   JobShare,
-  JobStatus,
   JobType,
   JobWithStatus,
   NextJobAction,
@@ -13,15 +12,17 @@ import {
   PaidJobWithStatus,
   PricingType,
   Prisma,
+  SokosumiJobStatus,
 } from "@sokosumi/database";
 import prisma from "@sokosumi/database/client";
 import { computeJobStatus, isPaidJob } from "@sokosumi/database/helpers";
 import {
   creditTransactionRepository,
-  jobEventRepository,
+  jobInputRepository,
   jobPurchaseRepository,
   jobRepository,
   jobShareRepository,
+  jobStatusRepository,
 } from "@sokosumi/database/repositories";
 import { track } from "@vercel/analytics/server";
 import { getTranslations } from "next-intl/server";
@@ -61,17 +62,17 @@ import { userService } from "./user.service";
 const { POSTMARK_FROM_EMAIL } = getEnvSecrets();
 const { NEXT_PUBLIC_SOKOSUMI_URL } = getEnvPublicConfig();
 
-const finalJobStatuses = new Set<JobStatus>([
-  JobStatus.COMPLETED,
-  JobStatus.FAILED,
-  JobStatus.PAYMENT_FAILED,
-  JobStatus.REFUND_RESOLVED,
-  JobStatus.DISPUTE_RESOLVED,
+const finalJobStatuses = new Set<SokosumiJobStatus>([
+  SokosumiJobStatus.COMPLETED,
+  SokosumiJobStatus.FAILED,
+  SokosumiJobStatus.PAYMENT_FAILED,
+  SokosumiJobStatus.REFUND_RESOLVED,
+  SokosumiJobStatus.DISPUTE_RESOLVED,
 ]);
 
-const failedJobStatuses = new Set<JobStatus>([
-  JobStatus.FAILED,
-  JobStatus.PAYMENT_FAILED,
+const failedJobStatuses = new Set<SokosumiJobStatus>([
+  SokosumiJobStatus.FAILED,
+  SokosumiJobStatus.PAYMENT_FAILED,
 ]);
 
 export const jobService = (() => {
@@ -88,7 +89,7 @@ export const jobService = (() => {
     }
     if (
       job.purchase?.onChainStatus === OnChainJobStatus.RESULT_SUBMITTED &&
-      job.status === JobStatus.COMPLETED
+      job.status === SokosumiJobStatus.COMPLETED
     ) {
       return null;
     }
@@ -143,7 +144,7 @@ export const jobService = (() => {
 
   async function dispatchFinalStatusNotification(
     job: JobWithStatus,
-    jobStatus: JobStatus,
+    jobStatus: SokosumiJobStatus,
   ) {
     if (job.jobType === JobType.DEMO || !job.user.notificationsOptIn) {
       return;
@@ -449,12 +450,14 @@ export const jobService = (() => {
     try {
       const result = job.result;
       if (result !== null) {
-        // Find the latest COMPLETED event with a result for the demo job
-        const eventWithResult = job.events.find((e) => e.result === result);
-        if (eventWithResult) {
+        // Find the latest COMPLETED status with a result for the demo job
+        const statusWithResult = job.statuses.find(
+          (status) => status.result === result,
+        );
+        if (statusWithResult) {
           await sourceImportService.enqueueFromMarkdown(
             userId,
-            eventWithResult.id,
+            statusWithResult.id,
             result,
           );
         }
@@ -1036,20 +1039,20 @@ export const jobService = (() => {
           const agentJobStatus = jobStatusToAgentJobStatus(
             agentJobStatusResult.data.status,
           );
-          const latestJobEvent =
-            await jobEventRepository.getLatestJobEventByJobId(job.id, tx);
+          const latestJobStatus =
+            await jobStatusRepository.getLatestJobStatusByJobId(job.id, tx);
 
-          if (!latestJobEvent) {
+          if (!latestJobStatus) {
             return computeJobStatus(job);
           }
 
-          // If the latest job event is the same as the agent job status result, return the current job status
-          if (latestJobEvent.externalId === agentJobStatusResult.data.id) {
+          // If the latest job status is the same as the agent job status result, return the current job status
+          if (latestJobStatus.externalId === agentJobStatusResult.data.id) {
             return computeJobStatus(job);
           } else {
-            // If the agent job status result has no external ID, check if the latest job event status is the same as the agent job status
+            // If the agent job status result has no external ID, check if the latest job status status is the same as the agent job status
             if (!agentJobStatusResult.data.id) {
-              if (latestJobEvent.status === agentJobStatus) {
+              if (latestJobStatus.status === agentJobStatus) {
                 return computeJobStatus(job);
               }
             }
@@ -1067,16 +1070,17 @@ export const jobService = (() => {
             inputSchemaValue = undefined;
           }
 
-          const newJobEvent = await jobEventRepository.createJobEventForJobId(
-            job.id,
-            {
-              externalId: agentJobStatusResult.data.id,
-              status: agentJobStatus,
-              inputSchema: inputSchemaValue,
-              result: agentJobStatusResult.data.result,
-            },
-            tx,
-          );
+          const newJobStatus =
+            await jobStatusRepository.createJobStatusForJobId(
+              job.id,
+              {
+                externalId: agentJobStatusResult.data.id,
+                status: agentJobStatus,
+                inputSchema: inputSchemaValue,
+                result: agentJobStatusResult.data.result,
+              },
+              tx,
+            );
 
           job = await jobRepository.getJobById(job.id, tx);
           if (!job) {
@@ -1088,7 +1092,7 @@ export const jobService = (() => {
             const outputResult = agentJobStatusResult.data?.result;
             if (typeof outputResult === "string") {
               sourceImportService
-                .enqueueFromMarkdown(job.userId, newJobEvent.id, outputResult)
+                .enqueueFromMarkdown(job.userId, newJobStatus.id, outputResult)
                 .catch(() => {
                   // Ignore errors
                 });
@@ -1099,8 +1103,8 @@ export const jobService = (() => {
         }
         const jobStatus = computeJobStatus(job);
         switch (jobStatus) {
-          case JobStatus.PAYMENT_FAILED:
-          case JobStatus.REFUND_RESOLVED:
+          case SokosumiJobStatus.PAYMENT_FAILED:
+          case SokosumiJobStatus.REFUND_RESOLVED:
             await jobRepository.refundJob(job.id, tx);
             break;
           default:
@@ -1207,10 +1211,10 @@ export const jobService = (() => {
    *
    * This function:
    * - Validates the job exists and user owns it
-   * - Validates the JobEvent (by statusId/externalId) is in awaiting input state
+   * - Validates the JobStatus (by statusId/externalId) is in awaiting input state
    * - Stores the provided input data
    * - Calls the agent API to provide input
-   * - Updates the existing JobEvent with input data and new status
+   * - Updates the existing JobStatus with input data and new status
    *
    * @param input - Parameters including jobId, statusId (maps to externalId), userId, and inputData
    * @returns Promise resolving to the updated Job record
@@ -1238,16 +1242,16 @@ export const jobService = (() => {
       throw new JobError(JobErrorCode.JOB_NOT_FOUND, "Job not found");
     }
 
-    // Get the JobEvent by externalId (statusId) that is awaiting input
-    const jobEvent =
-      await jobEventRepository.getAwaitingInputJobEventByExternalId(
-        statusId,
+    // Get the JobStatus by externalId (statusId) that is awaiting input
+    const jobStatus =
+      await jobStatusRepository.getAwaitingInputJobStatusByJobIdAndExternalId(
         jobId,
+        statusId,
       );
-    if (!jobEvent) {
+    if (!jobStatus) {
       throw new JobError(
         JobErrorCode.JOB_NOT_FOUND,
-        "Job event not found or is not awaiting input",
+        "Job status not found or is not awaiting input",
       );
     }
 
@@ -1262,7 +1266,7 @@ export const jobService = (() => {
       data: {
         jobId: job.id,
         statusId,
-        jobEventId: jobEvent.id,
+        jobStatusId: jobStatus.id,
         agentId: job.agentId,
         agentJobId: job.agentJobId,
       },
@@ -1281,7 +1285,7 @@ export const jobService = (() => {
       Sentry.setContext("agent_provide_input", {
         jobId: job.id,
         statusId,
-        jobEventId: jobEvent.id,
+        jobStatusId: jobStatus.id,
         agentId: job.agentId,
         agentJobId: job.agentJobId,
         error: provideInputResult.error,
@@ -1300,12 +1304,14 @@ export const jobService = (() => {
     const responseData = provideInputResult.data;
 
     const updatedJob = await prisma.$transaction(async (tx) => {
-      // Update the existing JobEvent with input data
-      await jobEventRepository.setInputForJobEventById(
-        jobEvent.id,
-        inputJson,
-        responseData.input_hash,
-        responseData.signature,
+      await jobInputRepository.createJobInputForJobIdAndJobStatusId(
+        job.id,
+        jobStatus.id,
+        {
+          input: inputJson,
+          inputHash: responseData.input_hash,
+          signature: responseData.signature,
+        },
         tx,
       );
 
@@ -1328,7 +1334,7 @@ export const jobService = (() => {
       data: {
         jobId: updatedJob.id,
         statusId,
-        jobEventId: jobEvent.id,
+        jobStatusId: jobStatus.id,
         statusResponse: responseData.status,
       },
     });

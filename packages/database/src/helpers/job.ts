@@ -4,14 +4,14 @@ import {
   NextJobAction,
   OnChainJobStatus,
 } from "../generated/prisma/browser.js";
-import type { Job, JobEvent } from "../generated/prisma/client.js";
+import type { Job, JobStatus } from "../generated/prisma/client.js";
 import {
   DemoJobWithStatus,
   FreeJobWithStatus,
-  JobStatus,
   type JobWithRelations,
   type JobWithStatus,
   PaidJobWithStatus,
+  SokosumiJobStatus,
 } from "../types/job.js";
 
 const TEN_MINUTES_TIMESTAMP = 1000 * 60 * 10; // 10min
@@ -19,17 +19,17 @@ const TEN_MINUTES_TIMESTAMP = 1000 * 60 * 10; // 10min
 function checkPaymentStatus(
   job: JobWithRelations,
   now: Date,
-): JobStatus | null {
+): SokosumiJobStatus | null {
   const purchase = job.purchase;
   if (!purchase) {
     if (job.createdAt.getTime() < now.getTime() - TEN_MINUTES_TIMESTAMP) {
-      return JobStatus.PAYMENT_FAILED;
+      return SokosumiJobStatus.PAYMENT_FAILED;
     } else {
-      return JobStatus.PAYMENT_PENDING;
+      return SokosumiJobStatus.PAYMENT_PENDING;
     }
   }
   if (purchase.onChainStatus === null && purchase.nextActionErrorType) {
-    return JobStatus.PAYMENT_FAILED;
+    return SokosumiJobStatus.PAYMENT_FAILED;
   }
   return null;
 }
@@ -45,21 +45,21 @@ function checkPaymentStatus(
  * @param job - The job object to evaluate.
  * @returns The corresponding `JobStatus` if the next action maps to a status, otherwise `null`.
  */
-function checkNextAction(job: JobWithRelations): JobStatus | null {
+function checkNextAction(job: JobWithRelations): SokosumiJobStatus | null {
   const purchase = job.purchase;
   if (!purchase) {
-    return JobStatus.PAYMENT_PENDING;
+    return SokosumiJobStatus.PAYMENT_PENDING;
   }
 
   switch (purchase.nextAction) {
     case NextJobAction.FUNDS_LOCKING_INITIATED:
     case NextJobAction.FUNDS_LOCKING_REQUESTED:
-      return JobStatus.PAYMENT_PENDING;
+      return SokosumiJobStatus.PAYMENT_PENDING;
     case NextJobAction.SET_REFUND_REQUESTED_INITIATED:
     case NextJobAction.SET_REFUND_REQUESTED_REQUESTED:
     case NextJobAction.UNSET_REFUND_REQUESTED_INITIATED:
     case NextJobAction.UNSET_REFUND_REQUESTED_REQUESTED:
-      return JobStatus.REFUND_PENDING;
+      return SokosumiJobStatus.REFUND_PENDING;
     case NextJobAction.WITHDRAW_REFUND_REQUESTED:
     case NextJobAction.WITHDRAW_REFUND_INITIATED:
     case NextJobAction.WAITING_FOR_MANUAL_ACTION:
@@ -96,14 +96,14 @@ function getFundsLockedJobStatus(
   job: Job,
   agentJobStatus: AgentJobStatus,
   now: Date,
-): JobStatus {
+): SokosumiJobStatus {
   switch (agentJobStatus) {
     case AgentJobStatus.AWAITING_INPUT:
-      return JobStatus.INPUT_REQUIRED;
+      return SokosumiJobStatus.INPUT_REQUIRED;
     case AgentJobStatus.COMPLETED:
-      return JobStatus.COMPLETED;
+      return SokosumiJobStatus.COMPLETED;
     case AgentJobStatus.FAILED:
-      return JobStatus.FAILED;
+      return SokosumiJobStatus.FAILED;
     default:
       // Check for FAILED status first (highest priority)
       if (
@@ -111,7 +111,7 @@ function getFundsLockedJobStatus(
         job.externalDisputeUnlockTime.getTime() <
           now.getTime() - TEN_MINUTES_TIMESTAMP
       ) {
-        return JobStatus.FAILED;
+        return SokosumiJobStatus.FAILED;
       }
 
       // Check for RESULT_PENDING status (after submit result time with 10min grace period)
@@ -119,10 +119,10 @@ function getFundsLockedJobStatus(
         job.submitResultTime &&
         job.submitResultTime.getTime() < now.getTime() - TEN_MINUTES_TIMESTAMP
       ) {
-        return JobStatus.RESULT_PENDING;
+        return SokosumiJobStatus.RESULT_PENDING;
       }
 
-      return JobStatus.PROCESSING;
+      return SokosumiJobStatus.PROCESSING;
   }
 }
 
@@ -150,7 +150,7 @@ function getFundsLockedJobStatus(
  * @param job - The job object containing all relevant status and metadata.
  * @returns The resolved JobStatus for the job.
  */
-export function computeJobStatus(job: JobWithRelations): JobStatus {
+export function computeJobStatus(job: JobWithRelations): SokosumiJobStatus {
   switch (job.jobType) {
     case JobType.FREE:
       return computeFreeJobStatus(job);
@@ -161,35 +161,38 @@ export function computeJobStatus(job: JobWithRelations): JobStatus {
   }
 }
 
-function computeFreeJobStatus(job: JobWithRelations): JobStatus {
-  const latestJobEvent = job.events.at(0);
-  if (!latestJobEvent) {
-    return JobStatus.FAILED;
+function computeFreeJobStatus(job: JobWithRelations): SokosumiJobStatus {
+  if (job.statuses.length === 0) {
+    return SokosumiJobStatus.PAYMENT_PENDING;
   }
-  switch (latestJobEvent.status) {
+  const latestJobStatus = job.statuses.at(0);
+  if (!latestJobStatus) {
+    return SokosumiJobStatus.FAILED;
+  }
+  switch (latestJobStatus.status) {
     case AgentJobStatus.AWAITING_PAYMENT:
-      return JobStatus.FAILED;
+      return SokosumiJobStatus.FAILED;
     case AgentJobStatus.AWAITING_INPUT:
-      return JobStatus.INPUT_REQUIRED;
+      return SokosumiJobStatus.INPUT_REQUIRED;
     case AgentJobStatus.COMPLETED:
-      return JobStatus.COMPLETED;
+      return SokosumiJobStatus.COMPLETED;
     case AgentJobStatus.FAILED:
-      return JobStatus.FAILED;
+      return SokosumiJobStatus.FAILED;
     case AgentJobStatus.RUNNING:
-      return JobStatus.PROCESSING;
+      return SokosumiJobStatus.PROCESSING;
     default:
-      return JobStatus.FAILED;
+      return SokosumiJobStatus.FAILED;
   }
 }
 
-function computeDemoJobStatus(_job: JobWithRelations): JobStatus {
-  return JobStatus.COMPLETED;
+function computeDemoJobStatus(_job: JobWithRelations): SokosumiJobStatus {
+  return SokosumiJobStatus.COMPLETED;
 }
 
-function computePaidJobStatus(job: JobWithRelations): JobStatus {
+function computePaidJobStatus(job: JobWithRelations): SokosumiJobStatus {
   // 1. If the job has already been refunded, return the refund resolved status
   if (job.refundedCreditTransactionId) {
-    return JobStatus.REFUND_RESOLVED;
+    return SokosumiJobStatus.REFUND_RESOLVED;
   }
 
   const now = new Date();
@@ -206,9 +209,9 @@ function computePaidJobStatus(job: JobWithRelations): JobStatus {
     return nextActionStatus;
   }
 
-  const latestJobEvent = job.events.at(0);
-  if (!latestJobEvent) {
-    return JobStatus.FAILED;
+  const latestJobStatus = job.statuses.at(0);
+  if (!latestJobStatus) {
+    return SokosumiJobStatus.FAILED;
   }
   // 5. If the job has a purchase, it means the job is started
   switch (job.purchase?.onChainStatus) {
@@ -218,57 +221,49 @@ function computePaidJobStatus(job: JobWithRelations): JobStatus {
         job.payByTime &&
         job.payByTime.getTime() < now.getTime() - TEN_MINUTES_TIMESTAMP
       ) {
-        return JobStatus.FAILED;
+        return SokosumiJobStatus.FAILED;
       }
-      return JobStatus.PAYMENT_PENDING;
+      return SokosumiJobStatus.PAYMENT_PENDING;
     case OnChainJobStatus.FUNDS_LOCKED:
-      return getFundsLockedJobStatus(job, latestJobEvent.status, now);
+      return getFundsLockedJobStatus(job, latestJobStatus.status, now);
     case OnChainJobStatus.RESULT_SUBMITTED:
-      switch (latestJobEvent.status) {
+      switch (latestJobStatus.status) {
         case AgentJobStatus.COMPLETED:
-          return JobStatus.COMPLETED;
+          return SokosumiJobStatus.COMPLETED;
         default:
-          return JobStatus.RESULT_PENDING;
+          return SokosumiJobStatus.RESULT_PENDING;
       }
     case OnChainJobStatus.FUNDS_WITHDRAWN:
-      switch (latestJobEvent.status) {
+      switch (latestJobStatus.status) {
         case AgentJobStatus.COMPLETED:
-          return JobStatus.COMPLETED;
+          return SokosumiJobStatus.COMPLETED;
         default:
-          return JobStatus.FAILED;
+          return SokosumiJobStatus.FAILED;
       }
     case OnChainJobStatus.FUNDS_OR_DATUM_INVALID:
-      return JobStatus.PAYMENT_FAILED;
+      return SokosumiJobStatus.PAYMENT_FAILED;
     case OnChainJobStatus.REFUND_REQUESTED:
-      return JobStatus.REFUND_PENDING;
+      return SokosumiJobStatus.REFUND_PENDING;
     case OnChainJobStatus.REFUND_WITHDRAWN:
-      return JobStatus.REFUND_RESOLVED;
+      return SokosumiJobStatus.REFUND_RESOLVED;
     case OnChainJobStatus.DISPUTED:
-      return JobStatus.DISPUTE_PENDING;
+      return SokosumiJobStatus.DISPUTE_PENDING;
     case OnChainJobStatus.DISPUTED_WITHDRAWN:
-      return JobStatus.DISPUTE_RESOLVED;
+      return SokosumiJobStatus.DISPUTE_RESOLVED;
   }
 }
 
 export function mapJobWithStatus(job: JobWithRelations): JobWithStatus {
-  const completedEvent = job.events.find(
-    (event: JobEvent) => event.status === AgentJobStatus.COMPLETED,
+  const completedStatus = job.statuses.find(
+    (event: JobStatus) => event.status === AgentJobStatus.COMPLETED,
   );
-  const completedAt = completedEvent?.createdAt ?? null;
-  const result = completedEvent?.result ?? null;
-  const inputEvent = job.events.find((event: JobEvent) => {
-    switch (job.jobType) {
-      case JobType.FREE:
-        return event.status === AgentJobStatus.RUNNING;
-      case JobType.PAID:
-        return event.status === AgentJobStatus.AWAITING_PAYMENT;
-      case JobType.DEMO:
-        return event.status === AgentJobStatus.COMPLETED;
-    }
-  });
-  const input = inputEvent?.input ?? null;
-  const inputSchema = inputEvent?.inputSchema ?? null;
-  const inputHash = inputEvent?.inputHash ?? null;
+  const completedAt = completedStatus?.createdAt ?? null;
+  const result = completedStatus?.result ?? null;
+
+  const jobInput = job.inputs.at(0) ?? null;
+  const input = jobInput?.input ?? null;
+  const inputSchema = jobInput?.inputSchema ?? null;
+  const inputHash = jobInput?.inputHash ?? null;
 
   const jobStatusSettled =
     job.jobType === JobType.PAID

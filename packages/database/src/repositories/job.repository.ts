@@ -109,12 +109,12 @@ export const jobRepository = {
       [{ avg_duration_seconds: number | null }]
     >`
     SELECT 
-      COALESCE(AVG(EXTRACT(EPOCH FROM (je."createdAt" - j."createdAt"))), 0) as avg_duration_seconds
+      COALESCE(AVG(EXTRACT(EPOCH FROM (js."createdAt" - j."createdAt"))), 0) as avg_duration_seconds
     FROM "Job" j
-    INNER JOIN "jobEvent" je ON je."jobId" = j.id
+    INNER JOIN "jobStatus" js ON js."jobId" = j.id
     WHERE j."agentId" = ${agentId}
     AND j."jobType" != 'DEMO'
-    AND je.status = 'COMPLETED'::"AgentJobStatus"
+    AND js.status = 'COMPLETED'::"AgentJobStatus"
     AND j."createdAt" >= NOW() - INTERVAL '90 days'
   `;
     const averageDurationSeconds = result[0]?.avg_duration_seconds ?? 0;
@@ -214,11 +214,15 @@ export const jobRepository = {
             },
           },
         }),
-        events: {
+        inputs: {
           create: {
-            status: AgentJobStatus.COMPLETED,
             inputSchema: JSON.stringify(data.inputSchema),
             input: data.input,
+          },
+        },
+        statuses: {
+          create: {
+            status: AgentJobStatus.COMPLETED,
             result: data.result,
           },
         },
@@ -259,12 +263,16 @@ export const jobRepository = {
           },
         },
       }),
-      events: {
+      inputs: {
         create: {
-          status: data.agentJobStatus,
           inputSchema: JSON.stringify(data.inputSchema),
           input: data.input,
           inputHash: data.inputHash,
+        },
+      },
+      statuses: {
+        create: {
+          status: data.agentJobStatus,
         },
       },
       name: data.name,
@@ -587,7 +595,7 @@ function jobsNotFinishedWhereQuery(
       // Filter out free jobs that are completed or failed on agentJobStatus
       {
         jobType: JobType.FREE,
-        events: {
+        statuses: {
           some: {
             status: {
               in: finalizedAgentJobStatuses,
@@ -612,7 +620,7 @@ function jobsFinishedWhereQuery(): Prisma.JobWhereInput {
   return {
     AND: [
       {
-        events: {
+        statuses: {
           some: {
             status: {
               in: finalizedAgentJobStatuses,
