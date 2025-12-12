@@ -76,6 +76,7 @@ export const agentClient = (() => {
           return Err("Failed to start agent job");
         }
         const responseJson = await startJobResponse.json();
+
         const parsedResult = startPaidJobResponseSchema.safeParse(responseJson);
         if (!parsedResult.success) {
           return Err(
@@ -110,6 +111,7 @@ export const agentClient = (() => {
           return Err("Failed to start free agent job");
         }
         const responseJson = await startJobResponse.json();
+
         const parsedResult = startFreeJobResponseSchema.safeParse(responseJson);
         if (!parsedResult.success) {
           return Err(

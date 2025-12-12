@@ -1,21 +1,30 @@
 "use client";
 
-import { JobWithStatus, SokosumiJobStatus } from "@sokosumi/database";
+import {
+  AgentJobStatus,
+  JobStatusWithRelations,
+  JobWithSokosumiStatus,
+} from "@sokosumi/database";
 import { isPaidJob } from "@sokosumi/database/helpers";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useMemo } from "react";
 
 import DefaultErrorBoundary from "@/components/default-error-boundary";
 import Markdown from "@/components/markdown";
+import { Separator } from "@/components/ui/separator";
+import { getResultHash } from "@/lib/utils";
 
 import CopyMarkdown from "./copy-markdown";
 import DownloadButton from "./download-button";
+import { HashGroupRow } from "./hash-group-row";
 import JobShareButton from "./job-share-button";
 import MaximizeMarkdown from "./maximize-markdown";
 import RequestRefundButton from "./refund-request";
 
 interface JobDetailsOutputsProps {
-  job: JobWithStatus;
+  job: JobWithSokosumiStatus;
+  status: JobStatusWithRelations;
   readOnly?: boolean;
   activeOrganizationId?: string | null;
 }
@@ -30,6 +39,7 @@ function JobDetailsOutputsLayout({ children }: JobDetailsOutputsLayoutProps) {
 
 export default function JobDetailsOutputs({
   job,
+  status,
   readOnly = false,
   activeOrganizationId,
 }: JobDetailsOutputsProps) {
@@ -37,6 +47,7 @@ export default function JobDetailsOutputs({
     <DefaultErrorBoundary fallback={<JobDetailsOutputsError />}>
       <JobDetailsOutputsInner
         job={job}
+        status={status}
         readOnly={readOnly}
         activeOrganizationId={activeOrganizationId}
       />
@@ -46,13 +57,23 @@ export default function JobDetailsOutputs({
 
 function JobDetailsOutputsInner({
   job,
+  status,
   readOnly,
   activeOrganizationId,
 }: JobDetailsOutputsProps) {
   const t = useTranslations("Components.Jobs.JobDetails.Output");
+  const tMeta = useTranslations("Components.Jobs.JobDetails.Meta");
   const searchParams = useSearchParams();
 
-  const result = job.result;
+  const result = status.result;
+
+  const calculatedResultHash = useMemo(() => {
+    if (!job.identifierFromPurchaser || !result) return null;
+    return getResultHash(result, job.identifierFromPurchaser);
+  }, [result, job.identifierFromPurchaser]);
+
+  const onChainResultHash = job.purchase?.resultHash ?? null;
+  const showHashSection = status.status === AgentJobStatus.COMPLETED;
 
   return (
     <JobDetailsOutputsLayout>
@@ -79,11 +100,29 @@ function JobDetailsOutputsInner({
               <RequestRefundButton initialJob={job} />
             )}
           </div>
+          {showHashSection && (
+            <>
+              <Separator className="my-2" />
+              <HashGroupRow
+                label={tMeta("resultHash")}
+                direction="result"
+                jobType={job.jobType}
+                onChainStatus={job.purchase?.onChainStatus}
+                identifierFromPurchaser={job.identifierFromPurchaser}
+                result={result}
+                externalHash={onChainResultHash}
+                hash={calculatedResultHash}
+                tLabelExternal={tMeta("onChain")}
+                tLabelHash={tMeta("calculated")}
+                tMissing={tMeta("missing")}
+              />
+            </>
+          )}
         </>
       ) : (
         <>
           <p className="text-base">{t("none")}</p>
-          {job.status === SokosumiJobStatus.FAILED &&
+          {status.status === AgentJobStatus.FAILED &&
             !readOnly &&
             isPaidJob(job) && (
               <div className="flex justify-end">
