@@ -1,6 +1,12 @@
 "use client";
 
 import { JobType, OnChainJobStatus } from "@sokosumi/database";
+import {
+  type InputVerificationOptions,
+  isInputHashVerified,
+  isResultHashVerified,
+  type ResultVerificationOptions,
+} from "@sokosumi/masumi";
 import { AlertCircle, CheckCheck, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -12,12 +18,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { siteConfig } from "@/config/site";
-import {
-  cn,
-  InputVerificationOptions,
-  isJobVerified,
-  ResultVerificationOptions,
-} from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface VerificationState {
   direction: "input" | "result";
@@ -86,7 +87,7 @@ export function JobInputVerificationBadge({
     return {
       direction,
       isPending: false,
-      isVerified: isJobVerified("input", inputVerificationOptions),
+      isVerified: isInputHashVerified(inputVerificationOptions),
       isNotApplicable: false,
     };
   }, [direction, identifierFromPurchaser, inputHash, input, jobType]);
@@ -149,7 +150,7 @@ export function JobResultVerificationBadge({
       return {
         direction,
         isPending: false,
-        isVerified: isJobVerified("result", resultVerificationOptions),
+        isVerified: isResultHashVerified(resultVerificationOptions),
         isNotApplicable: false,
       };
     }
