@@ -15,7 +15,7 @@ import { Accordion, AccordionItem } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSession } from "@/lib/auth/auth.client";
 import { cn } from "@/lib/utils";
-import { getOutputBlobs } from "@/lib/utils/job-transformers";
+import { getInputBlobs, getOutputBlobs } from "@/lib/utils/job-transformers";
 import { getJobQueryOptions } from "@/queries";
 
 import JobDetailsInputs from "./inputs";
@@ -42,7 +42,6 @@ export default function JobDetails({
   className,
   activeOrganizationId,
 }: JobDetailsProps) {
-  const t = useTranslations("Components.Jobs.JobDetails");
   const { data: session } = useSession();
   const [showAllEvents, setShowAllEvents] = useState(false);
 
@@ -52,11 +51,11 @@ export default function JobDetails({
     initialData: initialJob,
   });
 
-  const shouldCollapse = job.statuses.length > 1 && !showAllEvents;
-  const collapsedCount = job.statuses.length - 1;
+  const shouldCollapse = job.statuses.length > 2 && !showAllEvents;
+  const collapsedCount = job.statuses.length - 2;
 
   const visibleEvents = shouldCollapse
-    ? [job.statuses[job.statuses.length - 1]]
+    ? [job.statuses[0], job.statuses[job.statuses.length - 1]]
     : job.statuses;
 
   return (
@@ -75,38 +74,10 @@ export default function JobDetails({
               activeOrganizationId={activeOrganizationId}
             />
           </AccordionItem>
-          <AccordionItemWrapper
-            value="input"
-            title={t("Input.title")}
-            verificationBadge={
-              <JobInputVerificationBadge
-                direction="input"
-                jobType={job.jobType}
-                identifierFromPurchaser={job.identifierFromPurchaser}
-                input={job.input}
-                inputHash={job.inputHash}
-              />
-            }
-          >
-            <JobDetailsInputs
-              input={job.input}
-              inputSchema={job.inputSchema}
-              blobs={job.inputBlobs}
-              inputHash={job.inputHash}
-              identifierFromPurchaser={job.identifierFromPurchaser}
-              jobType={job.jobType}
-            />
-          </AccordionItemWrapper>
         </Accordion>
 
         {visibleEvents.map((status: JobStatusWithRelations, index) => (
           <div key={`${job.id}-event-${status.id}`}>
-            {shouldCollapse && index === 0 && (
-              <CollapsedEventsButton
-                count={collapsedCount}
-                onExpand={() => setShowAllEvents(true)}
-              />
-            )}
             <JobDetailsContent
               job={job}
               status={status}
@@ -114,6 +85,12 @@ export default function JobDetails({
               activeOrganizationId={activeOrganizationId}
               isLast={index === visibleEvents.length - 1}
             />
+            {shouldCollapse && index === 0 && (
+              <CollapsedEventsButton
+                count={collapsedCount}
+                onExpand={() => setShowAllEvents(true)}
+              />
+            )}
           </div>
         ))}
       </ScrollArea>
@@ -248,7 +225,7 @@ function JobDetailsContent({
           <JobDetailsInputs
             input={status.input.input}
             inputSchema={status.inputSchema}
-            blobs={status.input.blobs}
+            blobs={getInputBlobs(status.blobs)}
             inputHash={status.input.inputHash}
             identifierFromPurchaser={job.identifierFromPurchaser}
             jobType={job.jobType}
