@@ -266,8 +266,8 @@
       "AgentStatusBadge": {
         "initiated": "Initiated",
         "awaitingPayment": "Awaiting Payment",
-        "awaitingInput": "Awaiting Input",
-        "running": "Running",
+        "awaitingInput": "Input Required",
+        "running": "Working",
         "completed": "Completed",
         "failed": "Failed",
         "unknown": "Unknown"
