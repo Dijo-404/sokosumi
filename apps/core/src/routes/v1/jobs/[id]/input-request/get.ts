@@ -59,9 +59,9 @@ export default function mount(app: OpenAPIHonoWithAuth) {
     const { authContext } = c.var;
     const { id } = c.req.valid("param");
 
-    const jobStatus = await prisma.$transaction(async (tx) => {
+    const jobEvent = await prisma.$transaction(async (tx) => {
       await requireJobAccess(authContext, id, tx);
-      const jobStatus = await tx.jobStatus.findFirst({
+      const jobEvent = await tx.jobEvent.findFirst({
         where: {
           jobId: id,
           status: AgentJobStatus.AWAITING_INPUT,
@@ -72,20 +72,20 @@ export default function mount(app: OpenAPIHonoWithAuth) {
         },
         take: 1,
       });
-      if (!jobStatus) {
+      if (!jobEvent) {
         throw notFound("No input request found");
       }
 
-      if (!jobStatus.inputSchema) {
+      if (!jobEvent.inputSchema) {
         throw unprocessableEntity("Agent did not provide an input schema");
       }
-      return jobStatus;
+      return jobEvent;
     });
 
     const inputRequest = {
-      eventId: jobStatus.id,
-      message: jobStatus.result,
-      inputSchema: jobStatus.inputSchema,
+      eventId: jobEvent.id,
+      message: jobEvent.result,
+      inputSchema: jobEvent.inputSchema,
     };
 
     return ok(c, inputRequestSchema.parse(inputRequest));

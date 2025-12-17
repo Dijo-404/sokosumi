@@ -78,16 +78,16 @@ export default function mount(app: OpenAPIHonoWithAuth) {
         throw notFound("Job not found");
       }
 
-      const events = job.statuses.map((status) => ({
-        ...status,
-        blobs: status.blobs.map((blob) => ({
+      const events = job.events.map((event) => ({
+        ...event,
+        blobs: event.blobs.map((blob) => ({
           ...blob,
           name: blob.fileName ?? null,
           mimeType: blob.mime ?? null,
           jobId: id,
           size: blob.size ? Number(blob.size) : null,
         })),
-        links: status.links.map((link) => ({
+        links: event.links.map((link) => ({
           ...link,
           jobId: id,
         })),

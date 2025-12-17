@@ -95,9 +95,9 @@ export default function mount(app: OpenAPIHonoWithAuth) {
       throw badRequest("Input data cannot be empty");
     }
 
-    const jobStatus = await prisma.$transaction(async (tx) => {
+    const jobEvent = await prisma.$transaction(async (tx) => {
       await requireJobAccess(authContext, jobId, tx);
-      const jobStatus = await tx.jobStatus.findFirst({
+      const jobEvent = await tx.jobEvent.findFirst({
         where: {
           id: eventId,
           jobId,
@@ -121,31 +121,31 @@ export default function mount(app: OpenAPIHonoWithAuth) {
         },
       });
 
-      if (!jobStatus) {
-        throw notFound("Job status not found or is not awaiting input");
+      if (!jobEvent) {
+        throw notFound("Job event not found or is not awaiting input");
       }
 
-      if (jobStatus.input !== null) {
-        throw conflict("Input has already been provided for this status");
+      if (jobEvent.input !== null) {
+        throw conflict("Input has already been provided for this event");
       }
 
-      if (!jobStatus.inputSchema) {
+      if (!jobEvent.inputSchema) {
         throw unprocessableEntity("Agent did not provide an input schema");
       }
 
-      return jobStatus;
+      return jobEvent;
     });
 
-    if (!jobStatus.externalId) {
+    if (!jobEvent.externalId) {
       throw unprocessableEntity(
-        "Agent did not provide an external ID for the status",
+        "Agent did not provide an external ID for the event",
       );
     }
 
     const provideInputResult = await createAgentClient().provideJobInput(
-      jobStatus.job.agent,
-      jobStatus.externalId,
-      jobStatus.job.agentJobId,
+      jobEvent.job.agent,
+      jobEvent.externalId,
+      jobEvent.job.agentJobId,
       inputData,
     );
 
@@ -155,7 +155,7 @@ export default function mount(app: OpenAPIHonoWithAuth) {
 
     const jobInput = await prisma.jobInput.create({
       data: {
-        status: { connect: { id: jobStatus.id } },
+        event: { connect: { id: jobEvent.id } },
         input: JSON.stringify(inputData),
         inputHash: provideInputResult.data.input_hash,
         signature: provideInputResult.data.signature,
