@@ -1,4 +1,7 @@
-import { inputSchema, inputsSchema } from "@sokosumi/masumi/schemas";
+import {
+  inputFieldSchema,
+  inputSchemaResponseSchema,
+} from "@sokosumi/masumi/schemas";
 import * as z from "zod";
 
 import { JobScheduleType } from "@/lib/types/job";
@@ -8,7 +11,7 @@ export const startJobInputSchema = z.object({
   organizationId: z.string().nullish(),
   agentId: z.string(),
   maxAcceptedCents: z.bigint(),
-  inputSchema: z.array(inputSchema),
+  inputSchema: z.array(inputFieldSchema),
   inputData: z.record(
     z.string(),
     z.union([
@@ -132,7 +135,7 @@ export const jobStatusResponseSchema = z
   .object({
     id: z.string().nullish(),
     status: z.enum(JOB_STATUS_VALUES),
-    input_schema: inputsSchema.nullish(),
+    input_schema: inputSchemaResponseSchema.nullish(),
     result: z.string().nullish(),
   })
   .superRefine((data, ctx) => {
@@ -161,7 +164,7 @@ export const createJobScheduleInputSchema = z.object({
   cron: z.string().nullish(),
   oneTimeAtUtc: z.string().nullish(),
   timezone: z.string(),
-  inputSchema: z.array(inputSchema),
+  inputSchema: z.array(inputFieldSchema),
   inputData: z.record(
     z.string(),
     z.union([
