@@ -448,6 +448,35 @@
         "placeholder": "Search jobs...",
         "clear": "Clear search",
         "resultsCount": "{found} of {total} results found"
+      },
+      "ReasoningStream": {
+        "title": "Reasoning Stream",
+        "jobId": "Job ID:",
+        "streaming": "Streaming...",
+        "about": "About this demo",
+        "aboutDescription": "This page demonstrates the Reasoning Stream feature using Server-Sent Events (SSE). The stream shows the AI agent's thought process in real-time as it processes a job. In production, this would connect to your actual agentic service API.",
+        "emptyTitle": "No reasoning stream active",
+        "emptyDescription": "Click the button below to start streaming the AI agent's thought process.",
+        "Actions": {
+          "start": "Start",
+          "stop": "Stop",
+          "clear": "Clear",
+          "restart": "Restart",
+          "startStreaming": "Start Streaming"
+        },
+        "Status": {
+          "queued": "Queued",
+          "thinking": "Thinking",
+          "executing": "Executing",
+          "completed": "Completed",
+          "failed": "Failed"
+        },
+        "LogType": {
+          "thinking": "Thinking",
+          "output": "Output",
+          "status": "Status",
+          "error": "Error"
+        }
       }
     },
     "Organizations": {
