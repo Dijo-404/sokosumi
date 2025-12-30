@@ -213,10 +213,6 @@ export const auth = betterAuth({
         required: true,
         defaultValue: false,
       },
-      imageHash: {
-        type: "string",
-        required: false,
-      },
     },
   },
   socialProviders: {
@@ -231,6 +227,12 @@ export const auth = betterAuth({
       clientSecret: env.MICROSOFT_CLIENT_SECRET,
       overrideUserInfoOnSignIn: true,
       mapProfileToUser,
+    },
+  },
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["google", "microsoft"],
     },
   },
   plugins: [
