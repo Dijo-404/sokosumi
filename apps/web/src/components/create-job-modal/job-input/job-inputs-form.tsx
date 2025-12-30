@@ -1,15 +1,17 @@
 "use client";
 
 import { AgentWithCreditsPrice } from "@sokosumi/database";
-import { InputDataSchemaType } from "@sokosumi/masumi/schemas";
+import { InputSchemaSchemaType } from "@sokosumi/masumi/schemas";
 import { useTranslations } from "next-intl";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import useAgentInputSchema from "@/hooks/use-agent-input-schema";
+import { useInputs } from "@/hooks/use-inputs";
 import { getAgentDemoValues, getAgentLegal } from "@/lib/helpers/agent";
 import { AgentDemoValues } from "@/lib/types/agent";
 
-import JobInputsFormClient from "./job-inputs-form.client";
+import { JobInputsFlatForm } from "./job-inputs-flat-form";
+import { JobInputsGroupedForm } from "./job-inputs-grouped-form";
 
 interface JobInputsFormProps {
   agent: AgentWithCreditsPrice;
@@ -19,7 +21,7 @@ interface JobInputsFormProps {
 }
 
 interface JobInputsFormInnerProps extends Omit<JobInputsFormProps, "isDemo"> {
-  inputDataSchema: InputDataSchemaType;
+  inputSchema: InputSchemaSchemaType;
   demoValues: AgentDemoValues | null;
 }
 
@@ -29,24 +31,20 @@ export default function JobInputsForm({
   isDemo,
   className,
 }: JobInputsFormProps) {
-  const {
-    data: inputDataSchema,
-    loading,
-    error,
-  } = useAgentInputSchema(agent.id);
+  const { data: inputSchema, loading, error } = useAgentInputSchema(agent.id);
 
   if (loading) {
     return <JobInputsFormSkeleton />;
   }
 
-  if (error || !inputDataSchema) {
+  if (error || !inputSchema) {
     return <JobInputsFormError />;
   }
 
   // check demo data is valid
   let demoValues: AgentDemoValues | null = null;
   if (isDemo) {
-    demoValues = getAgentDemoValues(agent, inputDataSchema);
+    demoValues = getAgentDemoValues(agent, inputSchema);
     if (!demoValues) {
       return <JobInputsFormDemoError />;
     }
@@ -57,7 +55,7 @@ export default function JobInputsForm({
       agent={agent}
       averageExecutionDuration={averageExecutionDuration}
       demoValues={demoValues}
-      inputDataSchema={inputDataSchema}
+      inputSchema={inputSchema}
       className={className}
     />
   );
@@ -67,16 +65,42 @@ function JobInputsFormInner({
   agent,
   averageExecutionDuration,
   demoValues,
-  inputDataSchema,
+  inputSchema,
   className,
 }: JobInputsFormInnerProps) {
+  const inputs = useInputs({ inputSchema });
+  const legal = getAgentLegal(agent);
+
+  // Render grouped form if schema has groups
+  if (inputs.isGrouped && inputs.groups) {
+    return (
+      <JobInputsGroupedForm
+        agent={agent}
+        averageExecutionDuration={averageExecutionDuration}
+        groups={inputs.groups}
+        flatInputs={inputs.flatInputs}
+        demoValues={demoValues}
+        legal={legal}
+        className={className}
+        activeGroupIndex={inputs.activeGroupIndex}
+        maxUnlockedGroupIndex={inputs.maxUnlockedGroupIndex}
+        goToNext={inputs.goToNext}
+        goBack={inputs.goBack}
+        goToGroup={inputs.goToGroup}
+        reset={inputs.reset}
+        resetMaxUnlockedTo={inputs.resetMaxUnlockedTo}
+      />
+    );
+  }
+
+  // Render flat form for non-grouped schemas
   return (
-    <JobInputsFormClient
+    <JobInputsFlatForm
       agent={agent}
       averageExecutionDuration={averageExecutionDuration}
-      inputDataSchema={inputDataSchema}
+      flatInputs={inputs.flatInputs}
       demoValues={demoValues}
-      legal={getAgentLegal(agent)}
+      legal={legal}
       className={className}
     />
   );

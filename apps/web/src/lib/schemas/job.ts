@@ -1,6 +1,12 @@
 import {
   inputFieldSchema,
+  InputFieldSchemaType,
+  inputFieldsSchema,
+  inputGroupsSchema,
+  inputSchema,
   inputSchemaResponseSchema,
+  inputSchemaSchema,
+  InputSchemaSchemaType,
 } from "@sokosumi/masumi/schemas";
 import * as z from "zod";
 
@@ -12,19 +18,7 @@ export const startJobInputSchema = z.object({
   agentId: z.string(),
   maxAcceptedCents: z.bigint(),
   inputSchema: z.array(inputFieldSchema),
-  inputData: z.record(
-    z.string(),
-    z.union([
-      z.number(),
-      z.string(),
-      z.array(z.string()),
-      z.boolean(),
-      z.array(z.number()),
-      z.instanceof(File),
-      z.array(z.instanceof(File)),
-      z.undefined(),
-    ]),
-  ),
+  inputData: inputSchema,
   jobScheduleId: z.string().nullish(),
 });
 
@@ -165,19 +159,7 @@ export const createJobScheduleInputSchema = z.object({
   oneTimeAtUtc: z.string().nullish(),
   timezone: z.string(),
   inputSchema: z.array(inputFieldSchema),
-  inputData: z.record(
-    z.string(),
-    z.union([
-      z.number(),
-      z.string(),
-      z.array(z.string()),
-      z.boolean(),
-      z.array(z.number()),
-      z.instanceof(File),
-      z.array(z.instanceof(File)),
-      z.undefined(),
-    ]),
-  ),
+  inputData: inputSchema,
   maxAcceptedCents: z.bigint(),
   endOnUtc: z.string().nullish(),
   endAfterOccurrences: z.number().int().positive().nullish(),
@@ -193,19 +175,68 @@ export type CreateJobScheduleInputSchemaType = z.infer<
 export const provideJobInputSchema = z.object({
   jobId: z.string(),
   statusId: z.string(),
-  inputData: z.record(
-    z.string(),
-    z.union([
-      z.number(),
-      z.string(),
-      z.array(z.string()),
-      z.boolean(),
-      z.array(z.number()),
-      z.instanceof(File),
-      z.array(z.instanceof(File)),
-      z.undefined(),
-    ]),
-  ),
+  inputData: inputSchema,
 });
 
 export type ProvideJobInputSchemaType = z.infer<typeof provideJobInputSchema>;
+
+const groupedInputSchema = z.object({ input_groups: inputGroupsSchema });
+
+type GroupedInputSchema = z.infer<typeof groupedInputSchema>;
+
+export function isGroupedSchema(
+  schema: InputSchemaSchemaType,
+): schema is GroupedInputSchema {
+  return groupedInputSchema.safeParse(schema).success;
+}
+
+export function flattenInputs(
+  schema: InputSchemaSchemaType,
+): InputFieldSchemaType[] {
+  if (isGroupedSchema(schema)) {
+    return schema.input_groups.flatMap((group) => group.input_data);
+  }
+  return schema.input_data;
+}
+
+export function normalizeAndValidateInputSchema(
+  parsed: unknown,
+): InputSchemaSchemaType | null {
+  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    const result = inputSchemaSchema.safeParse(parsed);
+    if (result.success) {
+      return result.data;
+    }
+
+    console.error(
+      "[normalizeAndValidateInputSchema] Invalid object schema:",
+      result.error,
+    );
+    return null;
+  }
+
+  if (Array.isArray(parsed)) {
+    const groupsResult = inputGroupsSchema.safeParse(parsed);
+    if (groupsResult.success) {
+      return { input_groups: groupsResult.data };
+    }
+
+    const fieldsResult = inputFieldsSchema.safeParse(parsed);
+    if (fieldsResult.success) {
+      return { input_data: fieldsResult.data };
+    }
+
+    console.error(
+      "[normalizeAndValidateInputSchema] Invalid array schema:",
+      groupsResult.error,
+      fieldsResult.error,
+    );
+    return null;
+  }
+
+  console.error(
+    "[normalizeAndValidateInputSchema] Unexpected schema format:",
+    typeof parsed,
+  );
+  return null;
+}

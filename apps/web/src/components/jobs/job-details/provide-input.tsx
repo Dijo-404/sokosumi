@@ -1,33 +1,30 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   JobEventWithRelations,
   JobWithSokosumiStatus,
 } from "@sokosumi/database";
+import { type InputSchemaSchemaType } from "@sokosumi/masumi/schemas";
 import {
-  inputFieldSchema,
-  InputFieldSchemaType,
-} from "@sokosumi/masumi/schemas";
-import { Command, CornerDownLeft, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+  ArrowLeft,
+  ArrowRight,
+  Command,
+  CornerDownLeft,
+  Loader2,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
-import React, { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-import JobInput from "@/components/create-job-modal/job-input/job-input";
+import { JobInputsFlatForm } from "@/components/create-job-modal/job-input/job-inputs-flat-form";
+import { FormFooterProps } from "@/components/create-job-modal/job-input/job-inputs-form-builder";
+import { JobInputsGroupedForm } from "@/components/create-job-modal/job-input/job-inputs-grouped-form";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import usePreventEnterSubmit from "@/hooks/use-prevent-enter-submit";
-import { CommonErrorCode } from "@/lib/actions";
-import { provideJobInput } from "@/lib/actions/job/action";
+import { useInputs } from "@/hooks/use-inputs";
+import { useProvideJobInput } from "@/hooks/use-provide-job-input";
 import {
-  defaultValues,
-  filterOutNullValues,
-  jobInputsFormSchema,
-  JobInputsFormSchemaType,
-} from "@/lib/job-input";
+  flattenInputs,
+  normalizeAndValidateInputSchema,
+} from "@/lib/schemas/job";
 import { getOSFromUserAgent, type OS } from "@/lib/utils";
 
 interface JobDetailsProvideInputProps {
@@ -41,39 +38,28 @@ export default function JobDetailsProvideInput({
 }: JobDetailsProvideInputProps) {
   const t = useTranslations("Components.Jobs.JobDetails.AwaitingInput");
 
-  // Parse input schema from job - validate each entry individually
-  const inputSchemas = useMemo<InputFieldSchemaType[]>(() => {
+  const parseResult = useMemo(() => {
+    if (!event.inputSchema) return null;
+
     try {
-      if (event.inputSchema) {
-        const parsed = JSON.parse(event.inputSchema);
-        if (Array.isArray(parsed)) {
-          // Validate each entry individually to allow partial success
-          const validatedSchemas: InputFieldSchemaType[] = [];
-          for (const entry of parsed) {
-            const schemaResult = inputFieldSchema.safeParse(entry);
-            if (schemaResult.success) {
-              validatedSchemas.push(schemaResult.data);
-            } else {
-              console.warn("Failed to validate input schema entry:", entry);
-            }
-          }
-          return validatedSchemas;
-        }
-      }
-    } catch (_error) {
-      console.error("Failed to parse input schema", _error);
+      const parsed = JSON.parse(event.inputSchema);
+      return normalizeAndValidateInputSchema(parsed);
+    } catch (error) {
+      console.error("[provide-input] Failed to parse JSON:", error);
+      return null;
     }
-    return [];
   }, [event.inputSchema]);
 
-  // Create a stable key to force form remount when schemas change
-  // This ensures useForm is re-initialized with correct resolver and defaultValues
-  const formKey = useMemo(
-    () => inputSchemas.map((s) => s.id).join(","),
-    [inputSchemas],
-  );
+  const flatInputs = useMemo(() => {
+    if (!parseResult) return [];
+    return flattenInputs(parseResult);
+  }, [parseResult]);
 
-  if (inputSchemas.length === 0) {
+  const formKey = useMemo(() => {
+    return flatInputs.map((s) => s.id).join(",");
+  }, [flatInputs]);
+
+  if (!parseResult || flatInputs.length === 0) {
     return (
       <div className="text-muted-foreground py-4 text-center">
         {t("noInputsRequired")}
@@ -81,13 +67,12 @@ export default function JobDetailsProvideInput({
     );
   }
 
-  // Render form in a keyed component so useForm re-initializes when schemas change
   return (
     <ProvideInputForm
       key={formKey}
       jobId={job.id}
       statusId={event.externalId}
-      inputSchemas={inputSchemas}
+      inputSchema={parseResult}
     />
   );
 }
@@ -95,16 +80,17 @@ export default function JobDetailsProvideInput({
 interface ProvideInputFormProps {
   jobId: string;
   statusId?: string | null;
-  inputSchemas: InputFieldSchemaType[];
+  inputSchema: InputSchemaSchemaType;
 }
+
 function ProvideInputForm({
   jobId,
   statusId,
-  inputSchemas,
+  inputSchema,
 }: ProvideInputFormProps) {
   const t = useTranslations("Components.Jobs.JobDetails.AwaitingInput");
   const tForm = useTranslations("Library.JobInput.Form");
-  const router = useRouter();
+  const inputs = useInputs({ inputSchema });
 
   // Defer OS detection to client-side to avoid hydration mismatch
   const [{ os, isMobile }, setOsInfo] = useState<{
@@ -113,81 +99,43 @@ function ProvideInputForm({
   }>({ os: "Unknown", isMobile: false });
 
   useEffect(() => {
-    setOsInfo(getOSFromUserAgent());
+    // Use requestAnimationFrame to defer the state update after hydration
+    const frame = requestAnimationFrame(() => {
+      setOsInfo(getOSFromUserAgent());
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
-  const form = useForm<JobInputsFormSchemaType>({
-    resolver: zodResolver(jobInputsFormSchema(inputSchemas, tForm)),
-    defaultValues: defaultValues(inputSchemas),
-    mode: "onChange",
+  const { handleSubmit, isSubmitting } = useProvideJobInput({
+    jobId,
+    statusId,
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Handle group clear - the generic form manages accumulated values internally
+  const handleGroupClear = useCallback(
+    (groupIndex: number, formReset: () => void) => {
+      formReset();
 
-  const onSubmit = async () => {
-    setIsSubmitting(true);
-
-    // Use form.getValues() directly to get the current form values
-    const values = form.getValues();
-    try {
-      const transformedInputData = filterOutNullValues(values);
-
-      if (!statusId) {
-        throw new Error("Status ID is required");
-      }
-
-      const result = await provideJobInput({
-        input: {
-          jobId,
-          statusId,
-          inputData: transformedInputData,
-        },
-      });
-      setIsSubmitting(false);
-
-      if (result.ok) {
-        toast.success(t("submitSuccess"));
-        router.refresh();
+      if (groupIndex === 0) {
+        inputs.reset();
       } else {
-        switch (result.error.code) {
-          case CommonErrorCode.UNAUTHENTICATED:
-            toast.error(tForm("Error.unauthenticated"));
-            break;
-          case CommonErrorCode.BAD_INPUT:
-            toast.error(tForm("Error.badInput"));
-            break;
-          default:
-            toast.error(t("submitError"));
-            break;
-        }
+        inputs.resetMaxUnlockedTo(groupIndex);
       }
-    } catch (_error) {
-      setIsSubmitting(false);
-      toast.error(t("submitError"));
-    }
-  };
+    },
+    [inputs],
+  );
 
-  const { isSubmitting: formIsSubmitting, isValid } = form.formState;
+  // Custom footer for flat form
+  const renderFlatFooter = useCallback(
+    (props: FormFooterProps) => {
+      const { isSubmitting: formIsSubmitting, isValid, reset } = props;
 
-  const { formRef, handleSubmit: enterPreventedHandleSubmit } =
-    usePreventEnterSubmit(form, onSubmit, true);
-
-  return (
-    <Form {...form}>
-      <form ref={formRef} onSubmit={enterPreventedHandleSubmit}>
-        <fieldset
-          disabled={isSubmitting || formIsSubmitting}
-          className="flex flex-1 flex-col gap-6"
-        >
-          {inputSchemas.map((jobInputSchema) => (
-            <JobInput
-              key={jobInputSchema.id}
-              form={form}
-              jobInputSchema={jobInputSchema}
-              disabled={isSubmitting || formIsSubmitting}
-            />
-          ))}
-          <div className="flex items-end justify-end gap-2">
+      return (
+        <div className="flex items-end justify-between gap-2">
+          <Button type="reset" variant="secondary" onClick={reset}>
+            {tForm("clear")}
+          </Button>
+          <div className="flex items-center gap-2">
             <Button
               type="submit"
               disabled={isSubmitting || formIsSubmitting || !isValid}
@@ -207,8 +155,105 @@ function ProvideInputForm({
               )}
             </Button>
           </div>
-        </fieldset>
-      </form>
-    </Form>
+        </div>
+      );
+    },
+    [isSubmitting, t, tForm, isMobile, os],
+  );
+
+  // Custom footer for grouped form
+  const renderGroupFooter = useCallback(
+    (props: FormFooterProps, isLast: boolean, groupIndex: number) => {
+      const {
+        isSubmitting: formIsSubmitting,
+        isValid,
+        reset: formReset,
+      } = props;
+      const isFirst = groupIndex === 0;
+
+      return (
+        <div className="flex items-end justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {!isFirst && (
+              <Button type="button" variant="secondary" onClick={inputs.goBack}>
+                <ArrowLeft className="size-4" />
+                {tForm("back")}
+              </Button>
+            )}
+            <Button
+              type="reset"
+              variant="secondary"
+              onClick={() => handleGroupClear(groupIndex, formReset)}
+            >
+              {tForm("clear")}
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            {isLast ? (
+              <Button
+                type="submit"
+                disabled={isSubmitting || formIsSubmitting || !isValid}
+                className="items-center justify-between gap-1"
+              >
+                <div className="flex items-center gap-1">
+                  {(isSubmitting || formIsSubmitting) && (
+                    <Loader2 className="size-4 animate-spin" />
+                  )}
+                  {t("submit")}
+                </div>
+                {!isMobile && (
+                  <div className="flex items-center gap-1">
+                    {os === "MacOS" ? <Command /> : tForm("ctrl")}
+                    <CornerDownLeft />
+                  </div>
+                )}
+              </Button>
+            ) : (
+              <Button type="submit" disabled={formIsSubmitting || !isValid}>
+                {formIsSubmitting && (
+                  <Loader2 className="size-4 animate-spin" />
+                )}
+                {tForm("next")}
+                <ArrowRight className="size-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+      );
+    },
+    [isSubmitting, t, tForm, isMobile, os, inputs.goBack, handleGroupClear],
+  );
+
+  // Render grouped form if schema has groups
+  if (inputs.isGrouped && inputs.groups) {
+    return (
+      <JobInputsGroupedForm
+        groups={inputs.groups}
+        className="min-w-0"
+        activeGroupIndex={inputs.activeGroupIndex}
+        maxUnlockedGroupIndex={inputs.maxUnlockedGroupIndex}
+        goToNext={inputs.goToNext}
+        goBack={inputs.goBack}
+        goToGroup={inputs.goToGroup}
+        reset={inputs.reset}
+        resetMaxUnlockedTo={inputs.resetMaxUnlockedTo}
+        customOnSubmit={handleSubmit}
+        customRenderGroupFooter={renderGroupFooter}
+        customIsSubmitting={isSubmitting}
+        customIsActive={true}
+      />
+    );
+  }
+
+  // Render flat form for non-grouped schemas
+  return (
+    <JobInputsFlatForm
+      flatInputs={inputs.flatInputs}
+      className="min-w-0"
+      customOnSubmit={handleSubmit}
+      customRenderFooter={renderFlatFooter}
+      customIsSubmitting={isSubmitting}
+      customIsActive={true}
+    />
   );
 }
