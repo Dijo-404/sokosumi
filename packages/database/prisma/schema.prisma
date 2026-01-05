@@ -19,7 +19,6 @@ model User {
   email         String
   emailVerified Boolean
   image         String?
-  imageHash     String? // Hash of image. (when this is too long for Cookie. e.g. base64)
   createdAt     DateTime
   updatedAt     DateTime
   sessions      Session[]
@@ -716,8 +715,8 @@ model Blob {
   userId String
   user   User   @relation("UserBlob", fields: [userId], references: [id], onDelete: Cascade)
 
-  eventId String?
-  event   JobEvent? @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+  event   JobEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, sourceUrl]) // For deduplication checks
   @@index([status, origin, createdAt]) // For getPendingResultBlobs query

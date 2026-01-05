@@ -3,18 +3,18 @@
 import type { Blob } from "@sokosumi/database";
 import { JobType } from "@sokosumi/database";
 import { hashInput } from "@sokosumi/masumi";
-import {
-  inputFieldSchema,
-  type InputFieldSchemaType,
-} from "@sokosumi/masumi/schemas";
+import { InputFieldSchemaType } from "@sokosumi/masumi/schemas";
 import { InputType } from "@sokosumi/masumi/types";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import * as z from "zod";
 
 import DefaultErrorBoundary from "@/components/default-error-boundary";
 import { FileChip } from "@/components/ui/file-chip";
 import { Separator } from "@/components/ui/separator";
+import {
+  flattenInputs,
+  normalizeAndValidateInputSchema,
+} from "@/lib/schemas/job";
 import { isUrlArray, isUrlString } from "@/lib/utils/file";
 
 import { HashGroupRow } from "./hash-group-row";
@@ -162,22 +162,27 @@ function JobDetailsInputsInner({
   const tMeta = useTranslations("Components.Jobs.JobDetails.Meta");
 
   const input = rawInput ? JSON.parse(rawInput) : {};
-  const inputSchema = rawInputSchema ? JSON.parse(rawInputSchema) : {};
 
   const calculatedInputHash = useMemo(() => {
     if (!identifierFromPurchaser || !rawInput) return null;
     return hashInput(rawInput, identifierFromPurchaser);
   }, [identifierFromPurchaser, rawInput]);
 
-  let inputsMap: Record<
+  const inputsMap: Record<
     string,
     { name: string; type: InputType; values?: string[] }
-  > = {};
-  if (Array.isArray(inputSchema)) {
-    inputsMap = z
-      .array(inputFieldSchema)
-      .parse(inputSchema)
-      .reduce(
+  > = useMemo(() => {
+    if (!rawInputSchema) return {};
+
+    try {
+      const parsed = JSON.parse(rawInputSchema);
+      const normalized = normalizeAndValidateInputSchema(parsed);
+      if (!normalized) {
+        return {};
+      }
+
+      const flatInputs = flattenInputs(normalized);
+      return flatInputs.reduce(
         (acc, item) => {
           const values = extractOptionValues(item);
           acc[item.id] = {
@@ -192,7 +197,11 @@ function JobDetailsInputsInner({
           { name: string; type: InputType; values?: string[] }
         >,
       );
-  }
+    } catch (error) {
+      console.error("[inputs] Failed to parse JSON:", error);
+      return {};
+    }
+  }, [rawInputSchema]);
 
   return (
     <div className="flex flex-col gap-2">
